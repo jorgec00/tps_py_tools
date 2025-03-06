@@ -137,7 +137,7 @@ def main():
     std_atm = StandardAtmosphere()
 
     # Load flight data
-    print("\nLoading Toer Fly By Data...")
+    print("\nLoading Tower Fly By Data...")
     file_path = os.path.join("PF7111", "TFB.xlsx")
     sortie = TFBData(file_path)
 
