@@ -26,6 +26,49 @@ def calculate_geopotential_altitude(geometric_altitude: np.ndarray) -> np.ndarra
     return (constants.EARTH_RADIUS * geometric_altitude) / (constants.EARTH_RADIUS + geometric_altitude)
 
 
+def calculate_pressure_differential_ratio(mach: np.ndarray) -> np.ndarray:
+    """
+    Calculate qc_pa = (PT - Pa)/Pa for a given mach number and pressure altitude
+    
+    Args:
+        mach: array of mach numbers
+        
+    Returns:
+        qc_pa: pressure differential ratio (at altitude) for the given mach number
+        
+    """
+    qc_pa = np.zeros_like(mach)
+    subsonic_mask = mach <= 1
+    supersonic_mask = ~subsonic_mask
+
+    # Calculate for subsonic
+    qc_pa[subsonic_mask] = (1 + 0.2*mach[subsonic_mask]**2)**(7/2)-1
+    
+    qc_pa[supersonic_mask] = (166.921*mach[supersonic_maks]**7) / (7*mach[supersonic_mask]**2 - 1)^(5/2) - 1
+    
+    return qc_pa
+
+def calculate_calibrated_pressure_differential_ratio(Vc: np.ndarray) -> np.ndarray:
+    """
+    Calculate qc_psl = (PT - Pa)/psl for a given mach number and pressure altitude
+    
+    Args:
+        mach: array of mach numbers
+        
+    Returns:
+        qc_psl: pressure differential ratio (at sea level, aka calibrated) for the given 
+        airspeed
+        
+    """
+    qc_psl = np.zeros_like(Vc)
+    sub_a_mask = Vc <= constants.SPEED_OF_SOUND_SEA_LEVEL
+    super_a_mask = ~sub_a_mask
+
+    qc_psl[sub_a_mask] = (1 + 0.2*(Vc[sub_a_mask]/ constants.SPEED_OF_SOUND_SEA_LEVEL)**2)**(7/2) - 1
+    
+    qc_psl[super_a_mask] = (166.921*(Vc[super_a_mask] / constants.SPEED_OF_SOUND_SEA_LEVEL)**7) / (7*(Vc[super_a_mask] / constants.SPEED_OF_SOUND_SEA_LEVEL)**2 - 1)**(5/2) - 1
+    
+    return qc_psl
 
 def calculate_pressure_altitude(pressure_ratio: np.ndarray) -> np.ndarray:
     """
@@ -153,7 +196,7 @@ def calculate_mach(qc: np.ndarray, pa: np.ndarray) -> np.ndarray:
 
     def combined_zero_func(qc_pa: float, mach: float) -> float:
         """Combined zero function for both regimes."""
-        if mach < 1:
+        if qc_pa < 0.89293:
             return subsonic_zero_func(qc_pa, mach)
         else:
             return supersonic_zero_func(qc_pa, mach)
@@ -177,11 +220,11 @@ def calculate_mach(qc: np.ndarray, pa: np.ndarray) -> np.ndarray:
 
         # Find root using provided bisection method
         # Use appropriate brackets based on initial estimate
-        if m0 < 0.95:  # Clearly subsonic
+        if qp < 0.89293:  # Clearly subsonic
             mach[i] = root(target, 0, 1)
-        else:  # Potentially supersonic
+        else:  # Supersonic
             try:
-                mach[i] = root(target, 0.95, 5.0)
+                mach[i] = root(target, 1.0, 5.0)
             except ValueError:  # If no supersonic solution, try subsonic
                 mach[i] = root(target, 0, 1)
 
@@ -255,4 +298,60 @@ def calculate_equivalent_airspeed(mach: np.ndarray, pressure_ratio: np.ndarray) 
 
     return eas
 
+def calculate_calibrated_airspeed(qc_psl: np.ndarray) -> np.ndarray:
+    """
+    Calculated clibrated airspeed (Vc) from the calibrated differential pressure ratio qc / Psl
+    
+    Args:
+        qc_psl: ratio of pressure differential (PT - Pa) to sea level pressure Psl
+        
+    Returns:
+        Vc: calibrated airspeed
+    
+    """
+    # Define the subsonic calculation for calibrated airspeed
+    def subsonic_vc_calc(qc_psl):
+        Vc = constants.SPEED_OF_SOUND_SEA_LEVEL * (5 * ((qc_psl+1)**(2/7)-1))**(1/2)
+    
+        return Vc
+    
+    # Define the root function for subsonic speed
+    def subsonic_vc_calc_root(qc_psl, Vc):
+        Vc_0 = constants.SPEED_OF_SOUND_SEA_LEVEL * (5 * ((qc_psl+1)**(2/7)-1))**(1/2) - Vc
 
+        return Vc_0
+    
+    # Define the supersonic root function
+    def supersonic_vc_calc_root(qc_psl, Vc):
+        Vc_0 = constants.SPEED_OF_SOUND_SEA_LEVEL * 0.881284 * ((qc_psl+1)*(1 - 1 / (7*(Vc / constants.SPEED_OF_SOUND_SEA_LEVEL)**2))**(5/2))**(1/2) - Vc
+    
+    # Combined root function
+    def combined_vc_root(qc_psl, Vc):
+        if qc_psl < 0.89293:
+            Vc0 = subsonic_vc_calc_root(qc_psl, Vc)
+        else:
+            Vc0 = supersonic_vc_calc_root(qc_psl, Vc)
+        
+        return Vc0
+    
+    # Initial Vc Estimates
+    Vc_estimates = subsonic_vc_calc(qc_psl)
+
+    # Refine using root finding
+    Vc = np.zeros_like(qc_psl)
+    for i, (qp, Vc0) in enumerate(zip(qc_psl, Vc_estimates)):
+        # Define target function for this pressure ratio
+        def target(qp, Vc0):
+            return combined_vc_root(qp, Vc0)
+
+        # Find root using provided bisection method
+        # Use appropriate brackets based on initial estimate
+        if qp < 0.89293:  # Clearly subsonic
+            Vc[i] = subsonic_vc_calc(qp)
+        else:  # Supersonic
+            try:
+                Vc[i] = root(target, constants.SPEED_OF_SOUND_SEA_LEVEL, 5*constants.SPEED_OF_SOUND_SEA_LEVEL)
+            except ValueError:  # If no supersonic solution, try subsonic
+                Vc[i] = root(target, 0, constants.SPEED_OF_SOUND_SEA_LEVEL)
+
+    return Vc

@@ -130,7 +130,47 @@ class TFB_calculator:
         # Altitude error correction
         dHpc = Hc - indicated_altitude
 
-        return {"dHpc": dHpc}
+        # True ambient pressure
+        Pa = self.atmosphere.pressure(Hc)
+        # Static Pressure
+        Ps = self.atmosphere.pressure(indicated_altitude)
+
+        # Calibrated Differential Pressure (measured)
+        qcic_psl = calculate_calibrated_pressure_differential_ratio(indicated_airspeed * 1.6878) #converted to kts
+        # Differential Pressure (measured)
+        qcic_ps = qcic_psl / pressure_ratio(indicated_altitude)
+
+        #Position Error Ratio
+        dPp_Ps = (Ps - Pa) / Ps
+
+        # Differential Pressure Ratio (actual)
+        qc_pa = (qcic_ps + 1) / (1 - dPp_Ps) - 1
+        qc_psl = qc_pa * pressure_ratio(Hc)
+
+        # Mach
+        Mic = calculate_mach(qcic_ps * Ps, Ps)
+        Mc = calculate_mach(qc_pa * Pa, Pa)
+
+        # Mach correction
+        dMpc = Mc - Mic
+
+        # Airspeed
+        Vic = calculate_calibrated_airspeed(qcic_psl) / 1.6878 # converted to kts
+        Vc = calculate_calibrated_airspeed(qc_psl) / 1.6878 
+
+        # Airspeed correction
+        dVpc = Vc - Vic
+
+        # Position Error Ratio
+        dPp_qcic = dPp_Ps / qcic_ps
+
+
+        return {"dHpc": dHpc,
+                "dMpc": dMpc,
+                "dVpc": dVpc,
+                "Mic": Mic,
+                "Vic": Vic,
+                "dPp_qcic": dPp_qcic}
         
 
 def main():
@@ -168,11 +208,13 @@ def main():
     '''
 
     # Print summary statistics
-    print("\nFlight Summary (Standard Atmosphere):")
-    print(f"\nAverage Altimeter Position Correction: {TFB_results['dHpc'].mean():.0f} ft")
-    '''print(f"Maximum Indicated Mach: {std_results['mach_ic'].max():.3f}")
-    print(f"Maximum Corrected Mach - Reference Calibration: {std_results['mach_pc_cal'].max():.3f}")
-    print(f"Maximum Corrected Mach - Observed Calibration: {std_results['mach_pc_obs'].max():.3f}")'''
+    print("\nLast Tower Point (Standard Atmosphere):")
+    print(f"\nAltimeter Position Correction: {TFB_results['dHpc'][-1]} ft")
+    print(f"\nAirspeed Position Correction: {TFB_results['dVpc'][-1]}")
+    print(f"\nMach Position Correction: {TFB_results['dMpc'][-1]}")
+    print(f"\nIndicated Mach: {TFB_results['Mic'][-1]}")
+    print(f"\nIndicated Airspeed: {TFB_results['Vic'][-1]}")
+    print(f"\nPosition Correction Ratio: {TFB_results['dPp_qcic'][-1]}")
 
     # Plot standard comparisons
     #plot_comparison(sortie.time_s, std_results, test_results)
