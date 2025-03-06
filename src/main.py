@@ -136,7 +136,7 @@ def main():
 
     # Load flight data
     print("\nLoading Toer Fly By Data...")
-    sortie = TFBData("TFB.xlsx")
+    sortie = TFBData("PF7111\TFB.xlsx")
 
     # Create a TFB calculator
     TFB_calc = TFB_calculator(std_atm)
