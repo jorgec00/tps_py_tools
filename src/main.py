@@ -24,19 +24,19 @@ class TalonSortieData:
     def __init__(self, filepath: str):
         data = pd.read_csv(filepath)
         # Measured values
-        self.time_s = data["time_s"].to_numpy()
-        self.velocity_north = data["vn_fps"].to_numpy()
-        self.velocity_east = data["ve_fps"].to_numpy()
-        self.velocity_down = data["vd_fps"].to_numpy()
-        self.geometric_height = data["z_ft"].to_numpy()
-        self.total_pressure = data["pt_psi"].to_numpy()
-        self.static_pressure = data["pa_psi"].to_numpy()
-        self.total_temperature = data["tt_k"].to_numpy()
-        self.angle_of_attack = data["aoa_rad"].to_numpy()
-        self.angle_of_sideslip = data["aos_rad"].to_numpy()
-        self.roll = data["phi_rad"].to_numpy()
-        self.pitch = data["theta_rad"].to_numpy()
-        self.yaw = data["psi_rad"].to_numpy()
+        self.time_s = data["time_s"].to_numpy(dtype=np.float64)
+        self.velocity_north = data["vn_fps"].to_numpy(dtype=np.float64)
+        self.velocity_east = data["ve_fps"].to_numpy(dtype=np.float64)
+        self.velocity_down = data["vd_fps"].to_numpy(dtype=np.float64)
+        self.geometric_height = data["z_ft"].to_numpy(dtype=np.float64)
+        self.total_pressure = data["pt_psi"].to_numpy(dtype=np.float64)
+        self.static_pressure = data["pa_psi"].to_numpy(dtype=np.float64)
+        self.total_temperature = data["tt_k"].to_numpy(dtype=np.float64)
+        self.angle_of_attack = data["aoa_rad"].to_numpy(dtype=np.float64)
+        self.angle_of_sideslip = data["aos_rad"].to_numpy(dtype=np.float64)
+        self.roll = data["phi_rad"].to_numpy(dtype=np.float64)
+        self.pitch = data["theta_rad"].to_numpy(dtype=np.float64)
+        self.yaw = data["psi_rad"].to_numpy(dtype=np.float64)
         # Derived values
         self.differential_pressure = self.total_pressure - self.static_pressure
 
@@ -137,7 +137,7 @@ def main():
     std_atm = StandardAtmosphere()
 
     # Load flight data
-    print("\nLoading Tower Fly By Data...")
+    print("\nLoading Tower Fly By Data...") #See sample excel spreadsheet for spreasheet format
     file_path = os.path.join("PF7111", "TFB.xlsx")
     sortie = TFBData(file_path)
 
