@@ -138,7 +138,7 @@ def main():
 
     # Load flight data
     print("\nLoading Tower Fly By Data...") #See sample excel spreadsheet for spreasheet format
-    file_path = os.path.join("PF7111", "TFB.xlsx")
+    file_path = os.path.join("PF7111", "TFB.xlsx")#use path.join to avoid compatiblity issues between Linux/Windows
     sortie = TFBData(file_path)
 
     # Create a TFB calculator
