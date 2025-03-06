@@ -17,6 +17,8 @@ from modules.std_atm import *
 import pandas as pd
 from modules.helpers import calculate_mach, calculate_equivalent_airspeed, TFB_constants, calculate_pressure_altitude
 from modules.plotters import *
+import os
+
 
 class TalonSortieData:
     def __init__(self, filepath: str):
@@ -136,7 +138,8 @@ def main():
 
     # Load flight data
     print("\nLoading Toer Fly By Data...")
-    sortie = TFBData("PF7111\TFB.xlsx")
+    file_path = os.path.join("PF7111", "TFB.xlsx")
+    sortie = TFBData(file_path)
 
     # Create a TFB calculator
     TFB_calc = TFB_calculator(std_atm)
