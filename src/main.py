@@ -15,7 +15,7 @@ import numpy as np
 from dataclasses import dataclass
 from modules.std_atm import *
 import pandas as pd
-from modules.helpers import calculate_mach, calculate_equivalent_airspeed, TFB_constants, calculate_pressure_altitude
+from modules.helpers import *
 from modules.plotters import *
 import os
 
@@ -70,8 +70,10 @@ class AirDataComputer:
         qcic_ps = (total_pressure - static_pressure) / static_pressure
         mach_ic = calculate_mach(total_pressure - static_pressure, static_pressure)
 
+        # Convert geometric to geopotential altitude
+        geopotential_altitude = calculate_geopotential_altitude(geometric_altitude)
         # Get true ambient pressure from atmosphere model
-        ambient_pressure = self.atmosphere.pressure(geometric_altitude)
+        ambient_pressure = self.atmosphere.pressure(geopotential_altitude)
 
         # Calculate observed position error (Ps - Pa)/Ps
         observed_error = (static_pressure - ambient_pressure) / static_pressure
@@ -84,9 +86,9 @@ class AirDataComputer:
         temperature = total_temperature / (1 + 0.2 * constants.TEMPERATURE_RECOVERY_FACTOR * mach_pc_obs * mach_pc_obs)
 
         # Get atmosphere properties and ratios
-        temperature_ratio = self.atmosphere.theta(geometric_altitude)
-        pressure_ratio = self.atmosphere.delta(geometric_altitude)
-        density_ratio = self.atmosphere.sigma(geometric_altitude)
+        temperature_ratio = self.atmosphere.theta(geopotential_altitude)
+        pressure_ratio = self.atmosphere.delta(geopotential_altitude)
+        density_ratio = self.atmosphere.sigma(geopotential_altitude)
 
         # Calculate pressure altitude
         pressure_altitude = calculate_pressure_altitude(pressure_ratio)
@@ -138,7 +140,7 @@ def main():
 
     # Load flight data
     print("\nLoading Tower Fly By Data...") #See sample excel spreadsheet for spreasheet format
-    file_path = os.path.join("PF7111", "TFB.xlsx")#use path.join to avoid compatiblity issues between Linux/Windows
+    file_path = os.path.join("PF7111", "TFB.xlsx") #use path.join to avoid compatiblity issues between Linux/Windows
     sortie = TFBData(file_path)
 
     # Create a TFB calculator
