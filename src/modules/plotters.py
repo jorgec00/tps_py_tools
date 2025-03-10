@@ -14,7 +14,7 @@ plt.rcParams.update({
 
 def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel):
     """Define function for plotting"""
-    def plotter(x: np.ndarray, y: np.ndarray, xlabel: str, ylabel: str, filename: str):
+    def plotter(x: np.ndarray, y: np.ndarray, xlabel: str, ylabel: str):
         # Create figure for Mach vs dMic
         fig, ax = plt.subplots(figsize=(9, 6))
 
@@ -28,7 +28,6 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel)
         ax.grid(True)
 
         fig.tight_layout()
-        fig.savefig(filename)
 
         return fig, ax
 
@@ -44,25 +43,27 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel)
     temp_pred = results["temp_pred"]
 
     """Plot Mach position correction vs instrument corrected Mach"""
-    fig, ax = plotter(Mic, dMpc, r"Instrument Corrected Mach, M$_{ic}$", r"Mach Position Correction, $\Delta$ $M_{pc}$", "dMpc_vs_Mic.png")    
-    
+    fig, ax = plotter(Mic, dMpc, r"Instrument Corrected Mach, M$_{ic}$", r"Mach Position Correction, $\Delta$ $M_{pc}$")    
+    fig.savefig("dMpc_vs_Mic.png")
 
     """Plot Altitude position correction vs instrument corrected Airspeed"""
-    fig, ax = plotter(Vic, dHpc, r"Instrument Corrected Airspeed, $V_{ic}$ (knots)", r"Altitude Position Correction, $\Delta$ $H_{ic}$ (feet)",
-            "dHpc_vs_Vic.png")
+    fig, ax = plotter(Vic, dHpc, r"Instrument Corrected Airspeed, $V_{ic}$ (knots)", r"Altitude Position Correction, $\Delta$ $H_{ic}$ (feet)")
+    fig.savefig("dHpc_vs_Vic.png")
 
 
     """Plot Altitude position correction vs instrument corrected Airspeed"""
-    fig, ax = plotter(Vic, dVpc, r"Instrument Corrected Airspeed, $V_{ic}$ (knots)", r"Airspeed Position Correction, $\Delta$ $V_{pc}$ (knots)", "dVpc_vs_Vic.png")
+    fig, ax = plotter(Vic, dVpc, r"Instrument Corrected Airspeed, $V_{ic}$ (knots)", r"Airspeed Position Correction, $\Delta$ $V_{pc}$ (knots)")
+    fig.savefig("dVpc_vs_Vic.png")
 
 
     """Plot position correction ratio vs instrument corrected Airspeed"""
-    fig, ax = plotter(Mic, dPp_qcic, r"Instrument Corrected Mach Number, $M_{ic}$", r"Static Position Error Pressure Coefficient, $\Delta$ $P_{p} / q_{cic}$",
-            "dPp_qcic_vs_Vic.png")
+    fig, ax = plotter(Mic, dPp_qcic, r"Instrument Corrected Mach Number, $M_{ic}$", r"Static Position Error Pressure Coefficient, $\Delta$ $P_{p} / q_{cic}$")
+    fig.savefig("dPp_qcic_vs_Vic.png")
 
 
     """Plot temp parameter vs mach parameter"""
-    fig, ax = plotter(mach_param, temp_param, r"Mach Parameter, $M_{ic}^2/5$", r"Temperature Parameter, $T_{ic} / T_{a} - 1$", "temp_mach.png")
+    fig, ax = plotter(mach_param, temp_param, r"Mach Parameter, $M_{ic}^2/5$", r"Temperature Parameter, $T_{ic} / T_{a} - 1$")
     ax.plot(mach_param, temp_pred, 'k', linewidth=0.5)
+    fig.savefig("temp_mach.png")
 
     plt.show()
