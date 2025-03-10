@@ -1,5 +1,6 @@
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
+from .std_atm import AtmosphereModel
 
 def plot_eas_comparison(time: np.ndarray, results: dict):
     """Plot comparison of EAS calculated using observed vs calibrated position errors."""
@@ -95,39 +96,75 @@ def plot_comparison(time, std_results, test_results):
     plt.show()
 
 
-def plot_position_error_analysis(mach_ic, static_pressure, atm, altitude, cal):
-    """Plot position error analysis including reference comparison."""
-    # Get true ambient pressure from atmosphere model
-    ambient_pressure = atm.pressure(altitude)
+def plot_position_error_analysis(results: dict, std_atm: AtmosphereModel):
+    """Extract data"""
+    dMpc = results["dMpc"]
+    dHpc = results["dHpc"]
+    dVpc = results["dVpc"]
+    Mic = results["Mic"]
+    Vic = results["Vic"]
+    dPp_qcic = results["dPp_qcic"]
 
-    # Calculate observed position error (Ps - Pa)/Ps
-    observed_error = (static_pressure - ambient_pressure) / static_pressure
-
-    # Get reference error from calibration
-    reference_error = cal.get_error(mach_ic)
-
-    # Calculate residuals
-    residuals = observed_error - reference_error
-
-    # Create figure with two subplots
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
+    """Plot Mach position correction vs instrument corrected Mach"""
+    # Create figure for Mach vs dMic
+    plt.figure()
 
     # Position error comparison plot
-    ax1.plot(mach_ic, observed_error, 'b.', label='Observed')
-    ax1.plot(mach_ic, reference_error, 'r-', label='Reference')
-    ax1.set_xlabel('Indicated Mach Number, M$_{ic}$')
-    ax1.set_ylabel(r'$\Delta P_p/P_s = (P_s - P_a)/P_s$')
-    ax1.set_title('Static Source Position Error Characteristic')
-    ax1.legend()
-    ax1.grid(True)
-
-    # Residual plot
-    ax2.plot(mach_ic, residuals, 'g.')
-    ax2.axhline(y=0, color='k', linestyle='--')
-    ax2.set_xlabel('Indicated Mach Number, M$_{ic}$')
-    ax2.set_ylabel('Residual Error')
-    ax2.set_title('Error Residuals (Observed - Reference)')
-    ax2.grid(True)
+    plt.plot(Mic, dMpc, 'ks', label='Tower Flyby')
+    plt.xlabel(r"Instrument Corrected Mach (M$_{ic}$)")
+    plt.ylabel(r"Mach Correction ($\Delta$ $M_{ic}$)")
+    plt.minorticks_on()
+    plt.legend()
+    plt.grid(True)
 
     plt.tight_layout()
     plt.show()
+    plt.savefig("dMpc_vs_Mic.png")
+
+    """Plot Altitude position correction vs instrument corrected Airspeed"""
+    # Create figure for Mach vs dMic
+    plt.figure()
+
+    # Position error comparison plot
+    plt.plot(Vic, dHpc, 'ks', label='Tower Flyby')
+    plt.xlabel(r"Instrument Corrected Airspeed ($V_{ic}$)")
+    plt.ylabel(r"Altitude Correction ($\Delta$ $H_{ic}$)")
+    plt.minorticks_on()
+    plt.legend()
+    plt.grid(True)
+    
+    plt.tight_layout()
+    plt.show()
+    plt.savefig("dHpc_vs_Vic.png")
+
+    """Plot Altitude position correction vs instrument corrected Airspeed"""
+    # Create figure for Mach vs dMic
+    plt.figure()
+
+    # Position error comparison plot
+    plt.plot(Vic, dVpc, 'ks', label='Tower Flyby')
+    plt.xlabel(r"Instrument Corrected Airspeed ($V_{ic}$)")
+    plt.ylabel(r"Airspeed Correction ($\Delta$ $V_{ic}$)")
+    plt.minorticks_on()
+    plt.legend()
+    plt.grid(True)
+    
+    plt.tight_layout()
+    plt.show()
+    plt.savefig("dVpc_vs_Vic.png")
+
+    """Plot position correction ratio vs instrument corrected Airspeed"""
+    # Create figure for Mach vs dMic
+    plt.figure()
+
+    # Position error comparison plot
+    plt.plot(Vic, dPp_qcic, 'ks', label='Tower Flyby')
+    plt.xlabel(r"Instrument Corrected Airspeed ($V_{ic}$)")
+    plt.ylabel(r"Position Correction Ratio($\Delta$ $P_{p} / q_{cic}$)")
+    plt.minorticks_on()
+    plt.legend()
+    plt.grid(True)
+    
+    plt.tight_layout()
+    plt.show()
+    plt.savefig("dPp_qcic_vs_Vic.png")

@@ -164,6 +164,8 @@ class TFB_calculator:
         # Position Error Ratio
         dPp_qcic = dPp_Ps / qcic_ps
 
+        #TODO: calculate the temperature recovery factor
+
 
         return {"dHpc": dHpc,
                 "dMpc": dMpc,
@@ -216,24 +218,11 @@ def main():
     print(f"\nIndicated Airspeed: {TFB_results['Vic'][-1]}")
     print(f"\nPosition Correction Ratio: {TFB_results['dPp_qcic'][-1]}")
 
-    # Plot standard comparisons
-    #plot_comparison(sortie.time_s, std_results, test_results)
-
     # Plot position error analysis
-    ''''
-    'plot_position_error_analysis(
-        std_results['mach_ic'],
-        sortie.static_pressure * 144,
-        test_atm,
-        sortie.geometric_height,
-        cal
-    )'
-    '''
-
-    # Plot EAS comparisons
-    '''print("\nGenerating EAS comparison plots...")
-    plot_eas_comparison(sortie.time_s, std_results)
-    plot_eas_mach_characteristic(std_results)'''
+    plot_position_error_analysis(
+        TFB_results,
+        std_atm
+    )
 
 if __name__ == "__main__":
     main()
