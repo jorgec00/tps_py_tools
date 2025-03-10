@@ -47,7 +47,7 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel)
     fig.savefig("dMpc_vs_Mic.png")
 
     """Plot Altitude position correction vs instrument corrected Airspeed"""
-    fig, ax = plotter(Vic, dHpc, r"Instrument Corrected Airspeed, $V_{ic}$ (knots)", r"Altitude Position Correction, $\Delta$ $H_{ic}$ (feet)")
+    fig, ax = plotter(Vic, dHpc, r"Instrument Corrected Airspeed, $V_{ic}$ (knots)", r"Altitude Position Correction, $\Delta$ $H_{pc}$ (feet)")
     fig.savefig("dHpc_vs_Vic.png")
 
 
