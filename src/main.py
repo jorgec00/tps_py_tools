@@ -170,8 +170,14 @@ class TFB_calculator:
         temp_param = indicated_temperature / tower_temperature - 1
         mach_param = 0.2*Mc**2
         
+        # Calculate temperature recovery factor
+        Kt, bias = np.polyfit(mach_param, temp_param, 1)
+        # Calculate predictions using these values
+        temp_pred = Kt * mach_param + bias
 
-
+        print(f"Temperature Recovery Factor: {Kt}")
+        print(f"Bias: {bias}")
+    
 
         return {"dHpc": dHpc,
                 "dMpc": dMpc,
@@ -180,7 +186,8 @@ class TFB_calculator:
                 "Vic": Vic,
                 "dPp_qcic": dPp_qcic,
                 "temp_param": temp_param,
-                "mach_param": mach_param}
+                "mach_param": mach_param,
+                "temp_pred": temp_pred}
         
 
 def main():
@@ -206,8 +213,9 @@ def main():
         sortie.tower_temperature,
         sortie.indicated_temperature
     )
-    
-    # Calculate temperature recovery factor
+
+
+    # Add results to TFB for plotting
     '''
     # Process data with test atmosphere
     print("Processing with test atmosphere...")
@@ -220,13 +228,13 @@ def main():
     '''
 
     # Print summary statistics
-    print("\nLast Tower Point (Standard Atmosphere):")
+    '''print("\nLast Tower Point (Standard Atmosphere):")
     print(f"Altimeter Position Correction: {TFB_results['dHpc'][-1]} ft")
     print(f"Airspeed Position Correction: {TFB_results['dVpc'][-1]}")
     print(f"Mach Position Correction: {TFB_results['dMpc'][-1]}")
     print(f"Indicated Mach: {TFB_results['Mic'][-1]}")
     print(f"Indicated Airspeed: {TFB_results['Vic'][-1]}")
-    print(f"Position Correction Ratio: {TFB_results['dPp_qcic'][-1]}")
+    print(f"Position Correction Ratio: {TFB_results['dPp_qcic'][-1]}")'''
 
     # Plot position error analysis
     plot_static_position_error_analysis(
