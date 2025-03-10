@@ -2,6 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .std_atm import AtmosphereModel
 
+# Update default font size and weight
+plt.rcParams.update({
+    'axes.labelsize': 12,        # Font size for x- and y-labels
+    'axes.labelweight': 'bold',  # Font weight for x- and y-labels
+    'axes.titlesize': 14,        # Font size for figure title
+    'axes.titleweight': 'bold',  # Font weight for figure title
+
+    # (Leave tick params as defaults)
+})
+
 def plot_eas_comparison(time: np.ndarray, results: dict):
     """Plot comparison of EAS calculated using observed vs calibrated position errors."""
     # Convert to knots for plotting
@@ -96,7 +106,7 @@ def plot_comparison(time, std_results, test_results):
     plt.show()
 
 
-def plot_position_error_analysis(results: dict, std_atm: AtmosphereModel):
+def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel):
     """Extract data"""
     dMpc = results["dMpc"]
     dHpc = results["dHpc"]
@@ -104,6 +114,8 @@ def plot_position_error_analysis(results: dict, std_atm: AtmosphereModel):
     Mic = results["Mic"]
     Vic = results["Vic"]
     dPp_qcic = results["dPp_qcic"]
+    temp_param = results["temp_param"]
+    mach_param = results["mach_param"]
 
     """Plot Mach position correction vs instrument corrected Mach"""
     # Create figure for Mach vs dMic
@@ -111,8 +123,8 @@ def plot_position_error_analysis(results: dict, std_atm: AtmosphereModel):
 
     # Position error comparison plot
     plt.plot(Mic, dMpc, 'ks', label='Tower Flyby')
-    plt.xlabel(r"Instrument Corrected Mach (M$_{ic}$)")
-    plt.ylabel(r"Mach Correction ($\Delta$ $M_{ic}$)")
+    plt.xlabel(r"Instrument Corrected Mach, M$_{ic}$")
+    plt.ylabel(r"Mach Position Correction, $\Delta$ $M_{pc}$")
     plt.minorticks_on()
     plt.legend()
     plt.grid(True)
@@ -127,8 +139,8 @@ def plot_position_error_analysis(results: dict, std_atm: AtmosphereModel):
 
     # Position error comparison plot
     plt.plot(Vic, dHpc, 'ks', label='Tower Flyby')
-    plt.xlabel(r"Instrument Corrected Airspeed ($V_{ic}$)")
-    plt.ylabel(r"Altitude Correction ($\Delta$ $H_{ic}$)")
+    plt.xlabel(r"Instrument Corrected Airspeed, $V_{ic}$ (knots)")
+    plt.ylabel(r"Altitude Position Correction, $\Delta$ $H_{ic}$ (feet)")
     plt.minorticks_on()
     plt.legend()
     plt.grid(True)
@@ -143,8 +155,8 @@ def plot_position_error_analysis(results: dict, std_atm: AtmosphereModel):
 
     # Position error comparison plot
     plt.plot(Vic, dVpc, 'ks', label='Tower Flyby')
-    plt.xlabel(r"Instrument Corrected Airspeed ($V_{ic}$)")
-    plt.ylabel(r"Airspeed Correction ($\Delta$ $V_{ic}$)")
+    plt.xlabel(r"Instrument Corrected Airspeed, $V_{ic}$ (knots)")
+    plt.ylabel(r"Airspeed Position Correction, $\Delta$ $V_{pc}$ (knots)")
     plt.minorticks_on()
     plt.legend()
     plt.grid(True)
@@ -158,9 +170,12 @@ def plot_position_error_analysis(results: dict, std_atm: AtmosphereModel):
     plt.figure()
 
     # Position error comparison plot
-    plt.plot(Vic, dPp_qcic, 'ks', label='Tower Flyby')
-    plt.xlabel(r"Instrument Corrected Airspeed ($V_{ic}$)")
-    plt.ylabel(r"Position Correction Ratio($\Delta$ $P_{p} / q_{cic}$)")
+    plt.plot(Mic, dPp_qcic, 'ks', label='Tower Flyby')
+    plt.xlabel(r"Instrument Corrected Mach Number, $M_{ic}$")
+    plt.ylabel(r"Static Position Error Pressure Coefficient, $\Delta$ $P_{p} / q_{cic}$")
+    plt.xlim(0, 1.4)
+    ylim = np.max([np.abs(np.min(dPp_qcic*(1.1))), np.max(dPp_qcic*1.1)])
+    plt.ylim(-ylim, ylim)
     plt.minorticks_on()
     plt.legend()
     plt.grid(True)
@@ -168,3 +183,19 @@ def plot_position_error_analysis(results: dict, std_atm: AtmosphereModel):
     plt.tight_layout()
     plt.show()
     plt.savefig("dPp_qcic_vs_Vic.png")
+
+    """Plot temp parameter vs mach parameter"""
+    # Create figure for Mach vs dMic
+    plt.figure()
+
+    # Position error comparison plot
+    plt.plot(mach_param, temp_param, 'ks', label='Tower Flyby')
+    plt.xlabel(r"Mach Parameter, $M_{ic}^2/5$")
+    plt.ylabel(r"Temperature Parameter, $T_{ic} / T_{a} - 1$")
+    plt.minorticks_on()
+    plt.legend()
+    plt.grid(True)
+    
+    plt.tight_layout()
+    plt.show()
+    plt.savefig("temp_mach.png")

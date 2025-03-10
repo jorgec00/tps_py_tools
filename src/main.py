@@ -48,6 +48,7 @@ class TFBData:
         self.grid_reading = data["grid_reading"].to_numpy(dtype=np.float64)
         self.grid_pressure_altitude = data["grid_pa"].to_numpy(dtype=np.float64)
         self.tower_temperature = data["tower_temp"].to_numpy(dtype=np.float64)+273.15
+        self.indicated_temperature = data["T_ic"].to_numpy(dtype=np.float64)+273.15
 
 class AirDataComputer:
     """
@@ -122,7 +123,8 @@ class TFB_calculator:
                              indicated_altitude: np.ndarray,
                              grid_reading: np.ndarray,
                              grid_pressure_altitude: np.ndarray,
-                             tower_temperature: np.ndarray) -> dict:
+                             tower_temperature: np.ndarray,
+                             indicated_temperature) -> dict:
         # Std Temp at tower pressure altitude
         T_std = self.atmosphere.temperature(grid_pressure_altitude)
         Hc = grid_pressure_altitude + TFB_constants.GRID_CONSTANT*grid_reading*T_std/tower_temperature
@@ -164,7 +166,11 @@ class TFB_calculator:
         # Position Error Ratio
         dPp_qcic = dPp_Ps / qcic_ps
 
-        #TODO: calculate the temperature recovery factor
+        #Calculate the temperature and mach parameters for temp recovery factor chart
+        temp_param = indicated_temperature / tower_temperature - 1
+        mach_param = 0.2*Mc**2
+        
+
 
 
         return {"dHpc": dHpc,
@@ -172,7 +178,9 @@ class TFB_calculator:
                 "dVpc": dVpc,
                 "Mic": Mic,
                 "Vic": Vic,
-                "dPp_qcic": dPp_qcic}
+                "dPp_qcic": dPp_qcic,
+                "temp_param": temp_param,
+                "mach_param": mach_param}
         
 
 def main():
@@ -195,9 +203,11 @@ def main():
         sortie.indicated_altitude,
         sortie.grid_reading,
         sortie.grid_pressure_altitude,
-        sortie.tower_temperature
+        sortie.tower_temperature,
+        sortie.indicated_temperature
     )
-
+    
+    # Calculate temperature recovery factor
     '''
     # Process data with test atmosphere
     print("Processing with test atmosphere...")
@@ -211,15 +221,15 @@ def main():
 
     # Print summary statistics
     print("\nLast Tower Point (Standard Atmosphere):")
-    print(f"\nAltimeter Position Correction: {TFB_results['dHpc'][-1]} ft")
-    print(f"\nAirspeed Position Correction: {TFB_results['dVpc'][-1]}")
-    print(f"\nMach Position Correction: {TFB_results['dMpc'][-1]}")
-    print(f"\nIndicated Mach: {TFB_results['Mic'][-1]}")
-    print(f"\nIndicated Airspeed: {TFB_results['Vic'][-1]}")
-    print(f"\nPosition Correction Ratio: {TFB_results['dPp_qcic'][-1]}")
+    print(f"Altimeter Position Correction: {TFB_results['dHpc'][-1]} ft")
+    print(f"Airspeed Position Correction: {TFB_results['dVpc'][-1]}")
+    print(f"Mach Position Correction: {TFB_results['dMpc'][-1]}")
+    print(f"Indicated Mach: {TFB_results['Mic'][-1]}")
+    print(f"Indicated Airspeed: {TFB_results['Vic'][-1]}")
+    print(f"Position Correction Ratio: {TFB_results['dPp_qcic'][-1]}")
 
     # Plot position error analysis
-    plot_position_error_analysis(
+    plot__static_position_error_analysis(
         TFB_results,
         std_atm
     )
