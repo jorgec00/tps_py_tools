@@ -229,7 +229,7 @@ def main():
     print(f"Position Correction Ratio: {TFB_results['dPp_qcic'][-1]}")
 
     # Plot position error analysis
-    plot__static_position_error_analysis(
+    plot_static_position_error_analysis(
         TFB_results,
         std_atm
     )
