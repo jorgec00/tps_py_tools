@@ -23,7 +23,7 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.minorticks_on()
-        ax.set_ylim(-np.abs(np.min(y*1.2)), np.max(y)*1.2)
+        #ax.set_ylim(-np.abs(np.min(y*1.2)), np.max(y)*1.2)
         fig.legend()
         ax.grid(True)
 
