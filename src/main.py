@@ -257,8 +257,6 @@ def main():
     plt.plot(sortie.event_marker)
     plt.show()
 
-    input("Press Enter to continue...")
-
     # Load flight data
     print("\nLoading Tower Fly By Data...") #See sample excel spreadsheet for spreasheet format
     file_path = os.path.join("PF7111", "TFB_20250307_378_HAND.xlsx") #use path.join to avoid compatiblity issues between Linux/Windows
