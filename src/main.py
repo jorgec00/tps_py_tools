@@ -41,6 +41,57 @@ class TalonSortieData:
         # Derived values
         self.differential_pressure = self.total_pressure - self.static_pressure
 
+class ViperSortieData:
+    def __init__(self, filepath: str):
+        data = pd.read_csv(filepath)
+        # Measured values
+        #self.time_irig = data["IRIG_TIME"].to_numpy(dtype=np.float64)
+        self.angle_of_attack = data["AOA"].to_numpy(dtype=np.float64)
+        self.instrument_corrected_altitude = data["BARO_ALT_1553"].to_numpy(dtype=np.float64)
+        self.instrument_corrected_airspeed = data["CAL_AS_1553"].to_numpy(dtype=np.float64)
+        self.event_marker = data["EVENT_MARKER"].to_numpy(dtype=np.float64)
+        self.temp1 = data["FS_TEMP_K_1553"].to_numpy(dtype=np.float64)
+        self.true_AoA = data["TRUE_AOA_1553"].to_numpy(dtype=np.float64)
+        self.temp2 = data["TAT_DEGC"].to_numpy(dtype=np.float64)
+        self.angle_of_sideslip = data["AOSS"].to_numpy(dtype=np.float64)
+
+    def extract_events(self, filename: str):
+        """
+        Extract data for each event marker and save to excel file.
+        """
+        # Get unique event markers
+        event_markers = np.unique(self.event_marker)
+
+        # create array to store empty first appearances
+        df_first_index = pd.DataFrame()
+
+        # Create a writer
+        writer = pd.ExcelWriter(filename)
+        # Loop through each event marker
+        for event in event_markers:
+            # Get indices for this event
+            index = np.where(self.event_marker == event)[0][0]
+            # Create a dataframe
+            df = pd.DataFrame({
+                "Event_Marker": [self.event_marker[index]],
+                "AoA": [self.angle_of_attack[index]],
+                "Altitude": [self.instrument_corrected_altitude[index]],
+                "Airspeed": [self.instrument_corrected_airspeed[index]],
+                "Temp1": [self.temp1[index]],
+                "True_AoA": [self.true_AoA[index]],
+                "Temp2": [self.temp2[index]],
+                "AoSS": [self.angle_of_sideslip[index]]
+            })
+
+            # Append to main DF
+            df_first_index = pd.concat([df_first_index, df], ignore_index=True)
+
+            # Save to excel
+            df_first_index.to_excel(writer)
+
+        # Save the file
+        writer.close()
+
 class TFBData:
     def __init__(self, filepath: str):
         data = pd.read_excel(filepath)
@@ -188,18 +239,31 @@ class TFB_calculator:
                 "dPp_qcic": dPp_qcic,
                 "temp_param": temp_param,
                 "mach_param": mach_param,
-                "temp_pred": temp_pred}
-        
+                "temp_pred": temp_pred}       
 
 def main():
     # Initialize atmosphere models
     print("Initializing atmosphere models...")
     std_atm = StandardAtmosphere()
 
+    # Load DAS data
+    print("\nLoading Viper Sortie Data...")
+    sortie = ViperSortieData(os.path.join("PF7111", "TFB_20250307_378_DAS_RAW.csv"))
+    sortie.extract_events(os.path.join("PF7111", "TFB_20250307_378_DAS.xlsx"))
+    
+    # Print data summary
+    print("\nData Summary:")
+    print(pd.Series(sortie.event_marker).describe())
+    plt.plot(sortie.event_marker)
+    plt.show()
+
+    input("Press Enter to continue...")
+
     # Load flight data
     print("\nLoading Tower Fly By Data...") #See sample excel spreadsheet for spreasheet format
-    file_path = os.path.join("PF7111", "TFB.xlsx") #use path.join to avoid compatiblity issues between Linux/Windows
-    sortie = TFBData(file_path)
+    file_path = os.path.join("PF7111", "TFB_20250307_378_HAND.xlsx") #use path.join to avoid compatiblity issues between Linux/Windows
+    data = TFBData(file_path)
+
 
     # Create a TFB calculator
     TFB_calc = TFB_calculator(std_atm)
@@ -207,12 +271,12 @@ def main():
     # Process data with standard atmosphere
     print("\nProcessing with standard atmosphere...")
     TFB_results = TFB_calc.process_measurements(
-        sortie.indicated_airspeed,
-        sortie.indicated_altitude,
-        sortie.grid_reading,
-        sortie.grid_pressure_altitude,
-        sortie.tower_temperature,
-        sortie.indicated_temperature
+        data.indicated_airspeed,
+        data.indicated_altitude,
+        data.grid_reading,
+        data.grid_pressure_altitude,
+        data.tower_temperature,
+        data.indicated_temperature
     )
 
 
