@@ -41,58 +41,8 @@ class TalonSortieData:
         # Derived values
         self.differential_pressure = self.total_pressure - self.static_pressure
 
-class ViperSortieData:
-    def __init__(self, filepath: str):
-        data = pd.read_csv(filepath)
-        # Measured values
-        #self.time_irig = data["IRIG_TIME"].to_numpy(dtype=np.float64)
-        self.angle_of_attack = data["AOA"].to_numpy(dtype=np.float64)
-        self.instrument_corrected_altitude = data["BARO_ALT_1553"].to_numpy(dtype=np.float64)
-        self.instrument_corrected_airspeed = data["CAL_AS_1553"].to_numpy(dtype=np.float64)
-        self.event_marker = data["EVENT_MARKER"].to_numpy(dtype=np.float64)
-        self.temp1 = data["FS_TEMP_K_1553"].to_numpy(dtype=np.float64)
-        self.true_AoA = data["TRUE_AOA_1553"].to_numpy(dtype=np.float64)
-        self.temp2 = data["TAT_DEGC"].to_numpy(dtype=np.float64)
-        self.angle_of_sideslip = data["AOSS"].to_numpy(dtype=np.float64)
-
-    def extract_events(self, filename: str):
-        """
-        Extract data for each event marker and save to excel file.
-        """
-        # Get unique event markers
-        event_markers = np.unique(self.event_marker)
-
-        # create array to store empty first appearances
-        df_first_index = pd.DataFrame()
-
-        # Create a writer
-        writer = pd.ExcelWriter(filename)
-        # Loop through each event marker
-        for event in event_markers:
-            # Get indices for this event
-            index = np.where(self.event_marker == event)[0][0]
-            # Create a dataframe
-            df = pd.DataFrame({
-                "Event_Marker": [self.event_marker[index]],
-                "AoA": [self.angle_of_attack[index]],
-                "Altitude": [self.instrument_corrected_altitude[index]],
-                "Airspeed": [self.instrument_corrected_airspeed[index]],
-                "Temp1": [self.temp1[index]],
-                "True_AoA": [self.true_AoA[index]],
-                "Temp2": [self.temp2[index]],
-                "AoSS": [self.angle_of_sideslip[index]]
-            })
-
-            # Append to main DF
-            df_first_index = pd.concat([df_first_index, df], ignore_index=True)
-
-            # Save to excel
-            df_first_index.to_excel(writer)
-
-        # Save the file
-        writer.close()
-
 class TFBData:
+    ''' Extract tower flyby data from excel file'''
     def __init__(self, filepath: str):
         data = pd.read_excel(filepath)
         self.indicated_airspeed = data["Vic"].to_numpy(dtype=np.float64)
@@ -177,6 +127,7 @@ class TFB_calculator:
                              grid_pressure_altitude: np.ndarray,
                              tower_temperature: np.ndarray,
                              indicated_temperature) -> dict:
+        
         # Std Temp at tower pressure altitude
         T_std = self.atmosphere.temperature(grid_pressure_altitude)
         Hc = grid_pressure_altitude + TFB_constants.GRID_CONSTANT*grid_reading*T_std/tower_temperature
@@ -246,22 +197,11 @@ def main():
     print("Initializing atmosphere models...")
     std_atm = StandardAtmosphere()
 
-    # Load DAS data
-    print("\nLoading Viper Sortie Data...")
-    sortie = ViperSortieData(os.path.join("PF7111", "TFB_20250307_378_DAS_RAW.csv"))
-    sortie.extract_events(os.path.join("PF7111", "TFB_20250307_378_DAS.xlsx"))
-    
-    # Print data summary
-    print("\nData Summary:")
-    print(pd.Series(sortie.event_marker).describe())
-    plt.plot(sortie.event_marker)
-    plt.show()
-
-    # Load flight data
+    # Load RFB flight data from excel file (after DAS processing OR from Test Card)
     print("\nLoading Tower Fly By Data...") #See sample excel spreadsheet for spreasheet format
-    file_path = os.path.join("PF7111", "TFB_20250307_378_HAND.xlsx") #use path.join to avoid compatiblity issues between Linux/Windows
+    #use path.join to avoid compatiblity issues between Linux/Windows
+    file_path = os.path.join("PF7111", "TFB_20250311_COBRA67_HAND.xlsx") 
     data = TFBData(file_path)
-
 
     # Create a TFB calculator
     TFB_calc = TFB_calculator(std_atm)
@@ -277,18 +217,6 @@ def main():
         data.indicated_temperature
     )
 
-
-    # Add results to TFB for plotting
-    '''
-    # Process data with test atmosphere
-    print("Processing with test atmosphere...")
-    test_results = test_adc.process_measurements(
-        sortie.geometric_height,
-        sortie.total_pressure * 144,  # Convert PSI to PSF
-        sortie.static_pressure * 144,  # Convert PSI to PSF
-        sortie.total_temperature
-    )
-    '''
 
     # Print summary statistics
     '''print("\nLast Tower Point (Standard Atmosphere):")
