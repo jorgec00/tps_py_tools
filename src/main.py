@@ -16,10 +16,9 @@ from dataclasses import dataclass
 from modules.std_atm import *
 import pandas as pd
 from modules.helpers import *
-from modules.plotters import *
+from modules.plotters import plot_static_position_error_analysis
 import os
 
-#test
 
 class TalonSortieData:
     def __init__(self, filepath: str):
@@ -219,7 +218,6 @@ def main():
     )
 
 
-
     # Print summary statistics
     '''print("\nLast Tower Point (Standard Atmosphere):")
     print(f"Altimeter Position Correction: {TFB_results['dHpc'][-1]} ft")
@@ -228,6 +226,8 @@ def main():
     print(f"Indicated Mach: {TFB_results['Mic'][-1]}")
     print(f"Indicated Airspeed: {TFB_results['Vic'][-1]}")
     print(f"Position Correction Ratio: {TFB_results['dPp_qcic'][-1]}")'''
+
+
 
     # Plot position error analysis
     plot_static_position_error_analysis(
