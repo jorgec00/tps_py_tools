@@ -36,13 +36,13 @@ class ViperSortieData:
             # Create a dataframe
             df = pd.DataFrame({
                 "Event_Marker": [self.event_marker[index]],
-                "AoA": [self.angle_of_attack[index]],
-                "Altitude": [self.instrument_corrected_altitude[index]],
-                "Airspeed": [self.instrument_corrected_airspeed[index]],
-                "Temp1": [self.temp1[index]],
-                "True_AoA": [self.true_AoA[index]],
-                "Temp2": [self.temp2[index]],
-                "AoSS": [self.angle_of_sideslip[index]]
+                "AoA": [np.average(self.angle_of_attack[index-10:index+10])],
+                "Altitude": [np.average(self.instrument_corrected_altitude[index-10:index+10])],
+                "Airspeed": [np.average(self.instrument_corrected_airspeed[index-10:index+10])],
+                "Temp1": [np.average(self.temp1[index-10:index+10])],
+                "True_AoA": [np.average(self.true_AoA[index-10:index+10])],
+                "Temp2": [np.average(self.temp2[index-10:index+10])],
+                "AoSS": [np.average(self.angle_of_sideslip[index-10:index+10])]
             })
 
             # Append to main DF
@@ -61,7 +61,7 @@ def data_loader():
     sortie = ViperSortieData(os.path.join("PF7111", "TFB_20250307_378_DAS_RAW.csv"))
 
     # Extract event markers and data and save to EXCEL file
-    sortie.extract_events(os.path.join("PF7111", "TFB_20250307_378_DAS.xlsx"))
+    sortie.extract_events(os.path.join("PF7111", "TFB_20250307_378_DAS_EXTRACTED.xlsx"))
     
     # Print data summary
     print("\nData Summary:")

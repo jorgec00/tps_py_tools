@@ -200,7 +200,7 @@ def main():
     # Load RFB flight data from excel file (after DAS processing OR from Test Card)
     print("\nLoading Tower Fly By Data...") #See sample excel spreadsheet for spreasheet format
     #use path.join to avoid compatiblity issues between Linux/Windows
-    file_path = os.path.join("PF7111", "TFB_20250311_COBRA62_HAND.xlsx") 
+    file_path = os.path.join("PF7111", "TFB_20250307_378_DAS.xlsx") 
     data = TFBData(file_path)
 
     # Create a TFB calculator
@@ -216,6 +216,11 @@ def main():
         data.tower_temperature,
         data.indicated_temperature
     )
+
+    plt.plot(data.indicated_airspeed, 'ks')
+    plt.figure()
+    plt.plot(data.indicated_altitude, 'gs')
+    plt.show()
 
 
     # Print summary statistics
