@@ -80,7 +80,7 @@ class ViperSortieData:
         map.scatter(lat, lon, color='red', marker=False)
         map.marker(self.latitude[index], self.longitude[index], color='blue', title="Event Marker: " + str(event_marker))
 
-        map.draw('map.html')
+        map.draw(os.path.join('PF7111','plots','map.html'))
 
 
 def data_loader():
