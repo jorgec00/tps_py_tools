@@ -1,3 +1,6 @@
-Your working folder should be tps_py_tools/. Leave main.py inside src/ and run it from working folder. 
-
-Data should be within a folder inside tps_py_tools called PF71111.
+Recommended working folder structure. 
+0. Working folder should be tps_py_tools/
+1. PF7111/ (this folder contains your HAND collected and DAS colelcted excel files)
+    1a. plots/ (this folder is required for saving the plots)
+2. src/ (leave as is)
+3. venv/ for your optional virtual environemnt
