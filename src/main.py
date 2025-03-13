@@ -40,7 +40,7 @@ class TalonSortieData:
         # Derived values
         self.differential_pressure = self.total_pressure - self.static_pressure
 
-class TFBData:
+class load_TFB_Data:
     ''' Extract tower flyby data from excel file'''
     def __init__(self, filepath: str):
         data = pd.read_excel(filepath)
@@ -201,7 +201,7 @@ def main():
 
     #use path.join to avoid compatiblity issues between Linux/Windows
     file_path = os.path.join("PF7111", "TFB_20250307_378_DAS.xlsx") 
-    data = TFBData(file_path)
+    data = load_TFB_Data(file_path)
 
     # Create a TFB calculator
     TFB_calc = TFB_calculator(std_atm)

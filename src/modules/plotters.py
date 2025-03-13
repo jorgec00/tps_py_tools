@@ -7,11 +7,12 @@ from scipy.stats import t
 
 # Update default font size and weight
 plt.rcParams.update({
-    'axes.labelsize': 13,        # Font size for x- and y-labels
+    'axes.labelsize': 18,        # Font size for x- and y-labels
     'axes.labelweight': 'bold',  # Font weight for x- and y-labels
-    'axes.titlesize': 15,        # Font size for figure title
     'axes.titleweight': 'bold',  # Font weight for figure title
-
+    'axes.grid': True,
+    'xtick.labelsize': 16,        # Font size for x-tick labels
+    'ytick.labelsize': 16,        # Font size for y-tick labels
     # (Leave tick params as defaults)
 })
 
@@ -78,16 +79,15 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel)
     """Define function for plotting"""
     def plotter(x: np.ndarray, y: np.ndarray, xlabel: str, ylabel: str):
         # Create figure for Mach vs dMic
-        fig, ax = plt.subplots(figsize=(9, 6))
+        fig, ax = plt.subplots(figsize=(12, 8))
 
         # Position error comparison plot
         ax.plot(x, y, 'ks', label='Tower Flyby')
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
+        ax.set_xlabel(xlabel, family='sans-serif')
+        ax.set_ylabel(ylabel, family='sans-serif')
         ax.minorticks_on()
         #ax.set_ylim(-np.abs(np.min(y*1.2)), np.max(y)*1.2)
-        fig.legend()
-        ax.grid(True)
+        ax.legend(loc='best', fontsize=16)
 
         fig.tight_layout()
 

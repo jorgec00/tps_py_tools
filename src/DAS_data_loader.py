@@ -138,16 +138,9 @@ class ViperSortieData:
         # Show everything together
         fig.show()
 
-        #map = gmplot.GoogleMapPlotter(self.latitude[index], self.longitude[index], 15, map_type='satellite')
-
-        # Plot the run
-        #map.scatter(lat, lon, color='red', marker=False)
-        #map.marker(self.latitude[index], self.longitude[index], color='blue', title="Event Marker: " + str(event_marker))
-
-        #map.draw(os.path.join('PF7111','plots','map.html'))
 
 
-def data_loader():
+def DAS_data_loader():
     # Load DAS data
     print("\nLoading Viper DAS Sortie Data...")
     sortie = ViperSortieData(os.path.join("PF7111", "TFB_20250307_378_DAS_RAW.csv"))
@@ -156,9 +149,9 @@ def data_loader():
     sortie.extract_events(os.path.join("PF7111", "TFB_20250307_378_DAS_EXTRACTED.xlsx"))
     
     # Plot the TFB run for a given event marker
-    marker_plot = 12 # Change this to the event marker you want to plot
+    marker_plot = 2 # Change this to the event marker you want to plot
     print(f"\nPlotting TFB Run for Event Marker {marker_plot}...")
     sortie.plot_TFB_run(marker_plot)
     
 if __name__ == "__main__":
-    data_loader()
+    DAS_data_loader()
