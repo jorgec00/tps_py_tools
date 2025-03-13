@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import gmplot
+import plotly.express as px
 
 class ViperSortieData:
     def __init__(self, filepath: str):
@@ -72,15 +73,78 @@ class ViperSortieData:
         lat = self.latitude[index-pts:index+pts]
         lon = self.longitude[index-pts:index+pts]
         Vic = self.instrument_corrected_airspeed[index-pts:index+pts]
+        Hic = self.instrument_corrected_altitude[index-pts:index+pts]
+        Tic = self.Tic[index-pts:index+pts]
+        time = self.time_irig[index-pts:index+pts]
 
-        #Create a map
-        map = gmplot.GoogleMapPlotter(self.latitude[index], self.longitude[index], 15, map_type='satellite')
+        # Create a dataframe for the main figure
+        df_main = pd.DataFrame({
+            "time": time,
+            "lat": lat,
+            "lon": lon,
+            "Vic": Vic,
+            "Hic": Hic,
+            "Tic": Tic
+        })
+
+        # Create the main figure
+        fig = px.scatter_map(
+            df_main,
+            lat="lat",
+            lon="lon",
+            color="Vic",
+            color_continuous_scale=px.colors.sequential.Plasma,
+            hover_data={
+                "Vic": True,
+                "Hic": True,
+                "Tic": True,
+                "time": True,            },
+            zoom=11,
+            map_style="satellite",
+        )
+
+        # Create an event marer
+        df_star = pd.DataFrame({
+            "lat": self.latitude[index],      # Single point
+            "lon": self.longitude[index],     # Single point
+            "Vic": self.instrument_corrected_airspeed[index],  # Single point
+            "Hic": self.instrument_corrected_altitude[index],  # Single point
+            "Tic": self.Tic[index],  # Single point
+            "IRIG_TIME": self.time_irig[index],  # Single point
+            "event_marker": self.event_marker[index],  # Single point
+            "type": ["star"],     # A label for symbol mapping
+        })
+
+        # Create a second figure just for the star point
+        fig_star = px.scatter_map(
+            df_star,
+            lat="lat",
+            lon="lon",
+            hover_data={
+                "Vic": True,
+                "Hic": True,
+                "event_marker": True,
+                "Tic": True,
+                "IRIG_TIME": True
+            },
+            color_discrete_sequence=["red"],  # Color for the star poin
+            map_style="satellite"
+        )
+
+        # Combine
+        # Add the star marker trace from 'fig_star' to the main 'fig'
+        fig.add_trace(fig_star.data[0])
+
+        # Show everything together
+        fig.show()
+
+        #map = gmplot.GoogleMapPlotter(self.latitude[index], self.longitude[index], 15, map_type='satellite')
 
         # Plot the run
-        map.scatter(lat, lon, color='red', marker=False)
-        map.marker(self.latitude[index], self.longitude[index], color='blue', title="Event Marker: " + str(event_marker))
+        #map.scatter(lat, lon, color='red', marker=False)
+        #map.marker(self.latitude[index], self.longitude[index], color='blue', title="Event Marker: " + str(event_marker))
 
-        map.draw(os.path.join('PF7111','plots','map.html'))
+        #map.draw(os.path.join('PF7111','plots','map.html'))
 
 
 def data_loader():
@@ -92,13 +156,9 @@ def data_loader():
     sortie.extract_events(os.path.join("PF7111", "TFB_20250307_378_DAS_EXTRACTED.xlsx"))
     
     # Plot the TFB run for a given event marker
-    marker_plot = 8 # Change this to the event marker you want to plot
+    marker_plot = 12 # Change this to the event marker you want to plot
     print(f"\nPlotting TFB Run for Event Marker {marker_plot}...")
     sortie.plot_TFB_run(marker_plot)
-
-    # Print data summary
-    print("\nData Summary:")
-    print(pd.Series(sortie.event_marker).describe())
     
 if __name__ == "__main__":
     data_loader()
