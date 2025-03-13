@@ -105,19 +105,19 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel)
     temp_param_pred = results["temp_pred"]
 
     """Plot Mach position correction vs instrument corrected Mach"""
-    fig, ax = plotter(Mic, dMpc, r"Instrument Corrected Mach, M$_{ic}$", r"Mach Position Correction, ${\Delta$ $M_{pc}}$")    
+    fig, ax = plotter(Mic, dMpc, r"Instrument Corrected Mach, M$_{\mathbf{ic}}$", r"Mach Position Correction, ${\mathbf{\Delta M_{pc}}}$")    
     fig.savefig(os.path.join("PF7111","plots","dMpc_vs_Mic.png"))
 
     """Plot Altitude position correction vs instrument corrected Airspeed"""
-    fig, ax = plotter(Vic, dHpc, r"Instrument Corrected Airspeed, $V_{ic}$ (knots)", r"Altitude Position Correction, $\Delta$ $H_{pc}$ (feet)")
+    fig, ax = plotter(Vic, dHpc, r"Instrument Corrected Airspeed, ${\mathbf{V_{ic}}}$ (knots)", r"Altitude Position Correction, ${\mathbf{\Delta H_{pc}}}$ (feet)")
     fig.savefig(os.path.join("PF7111","plots", "dHpc_vs_Vic.png"))
 
     """Plot Altitude position correction vs instrument corrected Airspeed"""
-    fig, ax = plotter(Vic, dVpc, r"Instrument Corrected Airspeed, $V_{ic}$ (knots)", r"Airspeed Position Correction, $\Delta$ $V_{pc}$ (knots)")
+    fig, ax = plotter(Vic, dVpc, r"Instrument Corrected Airspeed, ${\mathbf{V_{ic}}}$ (knots)", r"Airspeed Position Correction, ${\mathbf{\Delta V_{pc}}}$ (knots)")
     fig.savefig(os.path.join("PF7111","plots", "dVpc_vs_Vic.png"))
 
     """Plot position correction ratio vs instrument corrected Airspeed"""
-    fig, ax = plotter(Mic, dPp_qcic, r"Instrument Corrected Mach Number, $M_{ic}$", r"Static Position Error Pressure Coefficient, $\Delta$ $P_{p} / q_{cic}$")
+    fig, ax = plotter(Mic, dPp_qcic, r"Instrument Corrected Mach Number, ${\mathbf{M_{ic}}}$", r"Static Position Error Pressure Coefficient, ${\mathbf{\Delta P_{p} / q_{cic}}}$")
     fig.savefig(os.path.join("PF7111","plots", "dPp_qcic_vs_Vic.png"))
     
     """Plot position correction ratio vs instrument corrected airspeed, overaly MIL-P-26292C Mil Spec"""
@@ -141,7 +141,7 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel)
     plt.plot(mach, curve_bottom, 'k--')
 
     """Plot temp parameter vs mach parameter"""
-    fig, ax = plotter(mach_param, temp_param, r"Mach Parameter, $M_{ic}^2/5$", r"Temperature Parameter, $T_{ic} / T_{a} - 1$")
+    fig, ax = plotter(mach_param, temp_param, r"Mach Parameter, ${\mathbf{M_{ic}^2/5}}$", r"Temperature Parameter, ${\mathbf{T_{ic} / T_{a} - 1}}$")
     ax.plot(mach_param, temp_param_pred, 'k', linewidth=0.5)
     # Calculate 95% prediction interval from Student T
     interval = t.interval(0.95, len(temp_param)-1)
@@ -153,4 +153,4 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel)
 
     fig.savefig(os.path.join("PF7111","plots", "temp_mach.png"))
 
-    plt.show()
+    
