@@ -3,4 +3,3 @@ Recommended working folder structure.
 1. PF7111/ (this folder contains your HAND collected and DAS colelcted excel files)
     1a. plots/ (this folder is required for saving the plots)
 2. src/ (leave as is)
-3. venv/ for your optional virtual environemnt
