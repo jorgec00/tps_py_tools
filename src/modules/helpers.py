@@ -44,7 +44,7 @@ def calculate_pressure_differential_ratio(mach: np.ndarray) -> np.ndarray:
     # Calculate for subsonic
     qc_pa[subsonic_mask] = (1 + 0.2*mach[subsonic_mask]**2)**(7/2)-1
     
-    qc_pa[supersonic_mask] = (166.921*mach[supersonic_mask]**7) / (7*mach[supersonic_mask]**2 - 1)^(5/2) - 1
+    qc_pa[supersonic_mask] = (166.921*mach[supersonic_mask]**7) / (7*mach[supersonic_mask]**2 - 1)**(5/2) - 1
     
     return qc_pa
 
@@ -53,7 +53,7 @@ def calculate_calibrated_pressure_differential_ratio(Vc: np.ndarray) -> np.ndarr
     Calculate qc_psl = (PT - Pa)/psl for a given mach number and pressure altitude
     
     Args:
-        mach: array of mach numbers
+        Vc: array of mach numbers
         
     Returns:
         qc_psl: pressure differential ratio (at sea level, aka calibrated) for the given 

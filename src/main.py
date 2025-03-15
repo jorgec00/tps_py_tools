@@ -18,6 +18,7 @@ import pandas as pd
 from modules.helpers import *
 from modules.plotters import plot_static_position_error_analysis
 import os
+import matplotlib.pyplot as plt
 
 
 class TalonSortieData:
@@ -53,64 +54,134 @@ class load_TFB_Data:
 
 class AirDataComputer:
     """
-    Air data computer that processes pressure and temperature measurements
-    to calculate airspeeds using a provided atmosphere model.
+    Air data computer that processes indicated airspeed and indicated altitude with a 
+    static position correction model to process corrections to flight parameters.
     """
 
     def __init__(self, atmosphere: AtmosphereModel):
         self.atmosphere = atmosphere
 
     def process_measurements(self,
-                             geometric_altitude: np.ndarray,
-                             total_pressure: np.ndarray,
-                             static_pressure: np.ndarray,
-                             total_temperature: np.ndarray) -> dict:
+                             indicated_airspeed: np.ndarray,
+                             indicated_altitude: np.ndarray,
+                             model: dict
+                             ) -> dict:
         """
         Process air data measurements to calculate flight conditions.
         """
-        # Calculate indicated quantities
-        qcic_ps = (total_pressure - static_pressure) / static_pressure
-        mach_ic = calculate_mach(total_pressure - static_pressure, static_pressure)
+        # Calculate calibrated pressure differential ration
+        qcic_psl = calculate_calibrated_pressure_differential_ratio(indicated_airspeed * 1.6878)
 
-        # Convert geometric to geopotential altitude
-        geopotential_altitude = calculate_geopotential_altitude(geometric_altitude)
-        # Get true ambient pressure from atmosphere model
-        ambient_pressure = self.atmosphere.pressure(geopotential_altitude)
+        # Calculate differential pressure ratio
+        qcic_ps = qcic_psl / pressure_ratio(indicated_altitude)
 
-        # Calculate observed position error (Ps - Pa)/Ps
-        observed_error = (static_pressure - ambient_pressure) / static_pressure
+        # Calculate static pressure
+        Ps = self.atmosphere.pressure(indicated_altitude)
 
-        # Calculate EAS using observed position error correction
-        qc_pa_obs = (qcic_ps + 1) / (1 - observed_error) - 1
-        mach_pc_obs = calculate_mach(qc_pa_obs * static_pressure, static_pressure)
+        # Indicated Mach
+        Mic = calculate_mach(qcic_ps * Ps, Ps)
 
-        # Calculate ambient temperature from total temperature
-        temperature = total_temperature / (1 + 0.2 * constants.TEMPERATURE_RECOVERY_FACTOR * mach_pc_obs * mach_pc_obs)
+        ## Interpolate the mode data with indicated mach
+        dPp_qcic = np.interp(Mic, model["Mic"], model["dPp_qcic"])
 
-        # Get atmosphere properties and ratios
-        temperature_ratio = self.atmosphere.theta(geopotential_altitude)
-        pressure_ratio = self.atmosphere.delta(geopotential_altitude)
-        density_ratio = self.atmosphere.sigma(geopotential_altitude)
+        # Plot for comparison
+        plt.plot(Mic, dPp_qcic, 'ks', label="dPp_qcic")
+        plt.plot(model["Mic"], model["dPp_qcic"], 'r*--', label="Hand-Faired Curve")
 
-        # Calculate pressure altitude
-        pressure_altitude = calculate_pressure_altitude(pressure_ratio)
+        # Calculate error ratio
+        dPp_Ps = dPp_qcic * qcic_ps
 
-        # Calculate airspeeds
-        eas_obs = calculate_equivalent_airspeed(mach_pc_obs, pressure_ratio)  # Using observed correction
+        # Calculate true differential pressure ratio
+        qc_pa = (qcic_ps + 1) / (1 - dPp_Ps) - 1
+        
+        # Calculate true ambient pressure
+        Pa = Ps * (1 - dPp_Ps)
+        
+        # Calculate true calibrated differential pressure
+        qc_psl = qc_pa * Pa / constants.PRESSURE_SEA_LEVEL
 
+        # Calculate Mach Error Correction
+        Mc = calculate_mach(qc_pa * Pa, Pa)
+        dMpc = Mc - Mic
+
+        # Calculate calibrated airspeed error correction
+        Vic = calculate_calibrated_airspeed(qcic_psl) / 1.6878 # converted to kts
+        Vc = calculate_calibrated_airspeed(qc_psl) / 1.6878 # converted to kts
+        dVpc = Vc - Vic
+
+        # Calculate altitude position correction
+        Hic = calculate_pressure_altitude(Ps / constants.PRESSURE_SEA_LEVEL) # in feet
+        Hc = calculate_pressure_altitude(Pa / constants.PRESSURE_SEA_LEVEL) # in feet
+        dHpc = Hc - Hic
+
+        # Return
         return {
-            'mach_ic': mach_ic,
-            'mach_pc_obs': mach_pc_obs,
-            'eas_obs': eas_obs,  # EAS using observed position error
-            'temperature': temperature,
-            'pressure': static_pressure,
-            'density': density_ratio * constants.DENSITY_SEA_LEVEL,
-            'temperature_ratio': temperature_ratio,
-            'pressure_ratio': pressure_ratio,
-            'density_ratio': density_ratio,
-            'pressure_altitude': pressure_altitude,
-            'observed_error': observed_error
+            "dMpc": dMpc,
+            "dHpc": dHpc,
+            "dVpc": dVpc,
+            "Mic": Mic,
+            "Vic": Vic,
+            "dPp_qcic": dPp_qcic
         }
+
+    def generate_model_data(self,
+                             altitude: np.float64,
+                             model: dict,
+                             ) -> dict:
+        """
+        Process air data measurements to calculate flight conditions.
+        """
+        # Mach
+        Mic = model["Mic"]
+
+        # Calculate static pressure
+        Ps = self.atmosphere.pressure(altitude)
+
+        # Calculate qcic_ps
+        qcic_ps = calculate_pressure_differential_ratio(Mic)
+
+        # Calculate calibrated pressure differential ration
+        qcic_psl = qcic_ps * pressure_ratio(altitude)
+
+        ## dPp_qcic
+        dPp_qcic = model["dPp_qcic"]
+
+        # Calculate error ratio
+        dPp_Ps = dPp_qcic * qcic_ps
+
+        # Calculate true differential pressure ratio
+        qc_pa = (qcic_ps + 1) / (1 - dPp_Ps) - 1
+        
+        # Calculate true ambient pressure
+        Pa = Ps * (1 - dPp_Ps)
+        
+        # Calculate true calibrated differential pressure
+        qc_psl = qc_pa * Pa / constants.PRESSURE_SEA_LEVEL
+
+        # Calculate Mach Error Correction
+        Mc = calculate_mach(qc_pa * Pa, Pa)
+        dMpc = Mc - Mic
+
+        # Calculate calibrated airspeed error correction
+        Vic = calculate_calibrated_airspeed(qcic_psl) / 1.6878 # converted to kts
+        Vc = calculate_calibrated_airspeed(qc_psl) / 1.6878 # converted to kts
+        dVpc = Vc - Vic
+
+        # Calculate altitude position correction
+        Hic = calculate_pressure_altitude(Ps / constants.PRESSURE_SEA_LEVEL) # in feet
+        Hc = calculate_pressure_altitude(Pa / constants.PRESSURE_SEA_LEVEL) # in feet
+        dHpc = Hc - Hic
+
+        # Return
+        return {
+            "dMpc": dMpc,
+            "dHpc": dHpc,
+            "dVpc": dVpc,
+            "Mic": Mic,
+            "Vic": Vic,
+            "dPp_qcic": dPp_qcic
+        }
+
 
 class TFB_calculator:
     '''
@@ -189,8 +260,8 @@ class TFB_calculator:
                 "dPp_qcic": dPp_qcic,
                 "temp_param": temp_param,
                 "mach_param": mach_param,
-                "temp_pred": temp_pred}       
-
+                "temp_pred": temp_pred}
+    
 def main():
     # Initialize atmosphere models
     print("Initializing atmosphere models...")
@@ -216,24 +287,51 @@ def main():
         data.tower_temperature,
         data.indicated_temperature
     )
+    '''
+    # Save mach and dPp_qcic in excel handfaired estimates
+    print("\nSaving results to excel file...")
+    results_df = pd.DataFrame({
+        "Mic": TFB_results["Mic"],
+        "dPp_qcic": TFB_results["dPp_qcic"]
+    })
+    results_df.to_excel(os.path.join("PF7111", "TFB_20250307_378_results.xlsx"), index=False)
+    '''
 
+    # Load hand faired position error curve (comment out if no curve found yet)
+    print("\nLoading hand faired curve data...")
+    #use path.join to avoid compatiblity issues between Linux/Windows
+    model_data = pd.read_excel(os.path.join("PF7111", "hand_faired_curve.xlsx"))
+    error_model = dict({
+        "Mic": model_data["Mic"].to_numpy(dtype=np.float64),
+        "dPp_qcic": model_data["dPp_qcic"].to_numpy(dtype=np.float64),
+    })
 
-    # Print summary statistics
-    '''print("\nLast Tower Point (Standard Atmosphere):")
-    print(f"Altimeter Position Correction: {TFB_results['dHpc'][-1]} ft")
-    print(f"Airspeed Position Correction: {TFB_results['dVpc'][-1]}")
-    print(f"Mach Position Correction: {TFB_results['dMpc'][-1]}")
-    print(f"Indicated Mach: {TFB_results['Mic'][-1]}")
-    print(f"Indicated Airspeed: {TFB_results['Vic'][-1]}")
-    print(f"Position Correction Ratio: {TFB_results['dPp_qcic'][-1]}")'''
+    print(f"\nData for hand faired curve:")
+    print(f"Minimum Indicated Mach: {np.min(TFB_results['Mic'])}")
+    print(f"Maximum Indicated Mach: {np.max(TFB_results['Mic'])}")
 
-
+    # Calculate all paramters using the ADC and the new model
+    ADC = AirDataComputer(std_atm)
+    #model_data = ADC.process_measurements(data.indicated_airspeed, data.indicated_altitude, model=error_model)
+    model_data_2300 = ADC.generate_model_data(np.float64(2300), model=error_model)
+    model_data_10K = ADC.generate_model_data(np.float64(10000), model=error_model)
+    model_data_20k = ADC.generate_model_data(np.float64(20000), model=error_model)
+    model_data = pd.DataFrame({
+        "2300": model_data_2300,
+        "10000": model_data_10K,
+        "20000": model_data_20k,
+    })
 
     # Plot position error analysis
     plot_static_position_error_analysis(
         TFB_results,
-        std_atm
+        std_atm,
+        model_data=model_data
     )
+
+    print(f"\nData for hand faired curve:")
+    print(f"Minimum Indicated Mach: {np.min(TFB_results['Mic'])}")
+    print(f"Maximum Indicated Mach: {np.max(TFB_results['Mic'])}")
 
 if __name__ == "__main__":
     main()

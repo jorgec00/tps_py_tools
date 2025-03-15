@@ -4,6 +4,7 @@ from .std_atm import AtmosphereModel
 import os
 from typing import Tuple
 from scipy.stats import t
+import pandas as pd
 
 # Update default font size and weight
 plt.rcParams.update({
@@ -75,25 +76,28 @@ class MIL_P_26292C:
 
         return mach, curve_top, curve_bottom
 
-def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel):
+def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel, model_data: pd.DataFrame  = None) -> None:
     """Define function for plotting"""
-    def plotter(x: np.ndarray, y: np.ndarray, xlabel: str, ylabel: str):
+    def plotter(x: np.ndarray, y: np.ndarray, xlabel: str, ylabel: str,  spec: bool = False):
         # Create figure for Mach vs dMic
         fig, ax = plt.subplots(figsize=(12, 8))
 
         # Position error comparison plot
-        ax.plot(x, y, 'ks', label='Tower Flyby')
+        if spec:
+            ax.plot(x, y, 'k', label='Data', linewidth=2)
+        else:
+            ax.plot(x, y, 'ks')
         ax.set_xlabel(xlabel, family='sans-serif')
         ax.set_ylabel(ylabel, family='sans-serif')
         ax.minorticks_on()
         #ax.set_ylim(-np.abs(np.min(y*1.2)), np.max(y)*1.2)
-        ax.legend(loc='best', fontsize=16)
+        #ax.legend(loc='best', fontsize=16)
 
         fig.tight_layout()
 
         return fig, ax
 
-    """Extract data"""
+    """Extract TFB data"""
     dMpc = results["dMpc"]
     dHpc = results["dHpc"]
     dVpc = results["dVpc"]
@@ -103,54 +107,97 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel)
     temp_param = results["temp_param"]
     mach_param = results["mach_param"]
     temp_param_pred = results["temp_pred"]
+    
 
     """Plot Mach position correction vs instrument corrected Mach"""
-    fig, ax = plotter(Mic, dMpc, r"Instrument Corrected Mach, M$_{\mathbf{ic}}$", r"Mach Position Correction, ${\mathbf{\Delta M_{pc}}}$")    
-    fig.savefig(os.path.join("PF7111","plots","dMpc_vs_Mic.png"))
+    fig1, ax1 = plotter(Mic, dMpc, r"Instrument Corrected Mach, M$_{\mathbf{ic}}$", r"Mach Position Correction, ${\mathbf{\Delta M_{pc}}}$")    
 
     """Plot Altitude position correction vs instrument corrected Airspeed"""
-    fig, ax = plotter(Vic, dHpc, r"Instrument Corrected Airspeed, ${\mathbf{V_{ic}}}$ (knots)", r"Altitude Position Correction, ${\mathbf{\Delta H_{pc}}}$ (feet)")
-    fig.savefig(os.path.join("PF7111","plots", "dHpc_vs_Vic.png"))
+    fig2, ax2 = plotter(Vic, dHpc, r"Instrument Corrected Airspeed, ${\mathbf{V_{ic}}}$ (knots)", r"Altitude Position Correction, ${\mathbf{\Delta H_{pc}}}$ (feet)")
 
     """Plot Altitude position correction vs instrument corrected Airspeed"""
-    fig, ax = plotter(Vic, dVpc, r"Instrument Corrected Airspeed, ${\mathbf{V_{ic}}}$ (knots)", r"Airspeed Position Correction, ${\mathbf{\Delta V_{pc}}}$ (knots)")
-    fig.savefig(os.path.join("PF7111","plots", "dVpc_vs_Vic.png"))
+    fig3, ax3 = plotter(Vic, dVpc, r"Instrument Corrected Airspeed, ${\mathbf{V_{ic}}}$ (knots)", r"Airspeed Position Correction, ${\mathbf{\Delta V_{pc}}}$ (knots)")
 
     """Plot position correction ratio vs instrument corrected Airspeed"""
-    fig, ax = plotter(Mic, dPp_qcic, r"Instrument Corrected Mach Number, ${\mathbf{M_{ic}}}$", r"Static Position Error Pressure Coefficient, ${\mathbf{\Delta P_{p} / q_{cic}}}$")
-    fig.savefig(os.path.join("PF7111","plots", "dPp_qcic_vs_Vic.png"))
-    
-    """Plot position correction ratio vs instrument corrected airspeed, overaly MIL-P-26292C Mil Spec"""
-    # Initiate MIL-P-26292C
-    mil_spec = MIL_P_26292C()
-    mach, curve_top, curve_bottom = mil_spec.curve_a()
-
-    # Plot!
-    plt.figure()
-    plt.plot(mach, curve_top, 'k--')
-    plt.plot(mach, curve_bottom, 'k--')
-
-    # Curve B
-    mach, curve_top, curve_bottom = mil_spec.curve_b()
-    plt.plot(mach, curve_top, 'k')
-    plt.plot(mach, curve_bottom, 'k')
-
-    # Curve B with Noseboom
-    mach, curve_top, curve_bottom = mil_spec.curve_b_NB()
-    plt.plot(mach, curve_top, 'k--')
-    plt.plot(mach, curve_bottom, 'k--')
+    fig4, ax4 = plotter(Mic, dPp_qcic, r"Instrument Corrected Mach Number, ${\mathbf{M_{ic}}}$", r"Static Position Error Pressure Coefficient, ${\mathbf{\Delta P_{p} / q_{cic}}}$")
 
     """Plot temp parameter vs mach parameter"""
-    fig, ax = plotter(mach_param, temp_param, r"Mach Parameter, ${\mathbf{M_{ic}^2/5}}$", r"Temperature Parameter, ${\mathbf{T_{ic} / T_{a} - 1}}$")
-    ax.plot(mach_param, temp_param_pred, 'k', linewidth=0.5)
+    fig5, ax5 = plotter(mach_param, temp_param, r"Mach Parameter, ${\mathbf{M_{ic}^2/5}}$", r"Temperature Parameter, ${\mathbf{T_{ic} / T_{a} - 1}}$")
+    ax5.plot(mach_param, temp_param_pred, 'k', linewidth=0.5)
     # Calculate 95% prediction interval from Student T
     interval = t.interval(0.95, len(temp_param)-1)
     temp_lower = temp_param_pred + interval[0]*np.std(temp_param_pred - temp_param)
     temp_upper = temp_param_pred + interval[1]*np.std(temp_param_pred - temp_param)
     # Overlay
-    ax.plot(mach_param, temp_lower, 'k--', dashes=(10,30))
-    ax.plot(mach_param, temp_upper, 'k--', dashes=(10,30))
+    ax5.plot(mach_param, temp_lower, 'k--', dashes=(10,30))
+    ax5.plot(mach_param, temp_upper, 'k--', dashes=(10,30))
 
-    fig.savefig(os.path.join("PF7111","plots", "temp_mach.png"))
 
+
+    # Prepare the handfaired curve data
+    if model_data is not None:
+        # Extract hand faired curve data
+        """Extract hand faired data curves"""
+        for md in model_data:
+            model_dMPc = model_data[md]["dMpc"]
+            model_dHpc = model_data[md]["dHpc"]
+            model_dVpc = model_data[md]["dVpc"]
+            model_Mic = model_data[md]["Mic"]
+            model_Vic = model_data[md]["Vic"]
+            model_dPp_qcic = model_data[md]["dPp_qcic"]
+
+            # Sort all the data in order from smallest to larges Vic
+            sort_idx = np.argsort(model_Vic)
+            model_dMPc = model_dMPc[sort_idx]
+            model_dHpc = model_dHpc[sort_idx]
+            model_dVpc = model_dVpc[sort_idx]
+            model_Mic = model_Mic[sort_idx]
+            model_Vic = model_Vic[sort_idx]
+            model_dPp_qcic = model_dPp_qcic[sort_idx]
+
+            """Plot position correction ratio vs instrument corrected airspeed, overaly MIL-P-26292C Mil Spec"""
+            # Plot
+            fig6, ax6 = plotter(model_Mic, 
+                                model_dPp_qcic, 
+                                r"Instrument Corrected Mach Number, ${\mathbf{M_{ic}}}$", 
+                                r"Static Position Error Pressure Coefficient, ${\mathbf{\Delta P_{p} / q_{cic}}}$", spec=True)
+            
+            # Initiate MIL-P-26292C
+            mil_spec = MIL_P_26292C()
+            mach, curve_top, curve_bottom = mil_spec.curve_a()
+            ax6.plot(mach, curve_top, 'k--', linewidth=0.5)
+            ax6.plot(mach, curve_bottom, 'k--', linewidth=0.5)
+
+            # Curve B
+            mach, curve_top, curve_bottom = mil_spec.curve_b()
+            ax6.plot(mach, curve_top, 'k', linewidth=0.5)
+            ax6.plot(mach, curve_bottom, 'k', linewidth=0.5)
+
+            # Curve B with Noseboom
+            mach, curve_top, curve_bottom = mil_spec.curve_b_NB()
+            ax6.plot(mach, curve_top, 'k--', linewidth=0.5)
+            ax6.plot(mach, curve_bottom, 'k--', linewidth=0.5)
+
+            # Add data to Mach correction plot
+            ax1.plot(model_Mic, model_dMPc, 'k')
+
+            # Add data to Altitude position correction plot
+            ax2.plot(model_Vic, model_dHpc, 'k')
+
+            # Add data to Airspeed position correction plot
+            ax3.plot(model_Vic, model_dVpc, 'k')
+
+            # Add data to position error comparison plot
+            ax4.plot(model_Mic, model_dPp_qcic, 'k')
+            fig6.savefig(os.path.join("PF7111","plots", "dPp_qcic_vs_Mic_MIL_SPEC.png"))
+
+    fig1.savefig(os.path.join("PF7111","plots","dMpc_vs_Mic.png"))
+    fig2.savefig(os.path.join("PF7111","plots", "dHpc_vs_Vic.png"))
+    fig3.savefig(os.path.join("PF7111","plots", "dVpc_vs_Vic.png"))
+    fig4.savefig(os.path.join("PF7111","plots", "dPp_qcic_vs_Mic.png"))
+    fig5.savefig(os.path.join("PF7111","plots", "temp_mach.png"))
     
+
+    plt.show()
+
+        
