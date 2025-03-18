@@ -19,6 +19,7 @@ from modules.helpers import *
 from modules.plotters import plot_static_position_error_analysis
 import os
 import matplotlib.pyplot as plt
+import sys
 
 
 class TalonSortieData:
@@ -267,6 +268,8 @@ def main():
     print("Initializing atmosphere models...")
     std_atm = StandardAtmosphere()
 
+    print(sys.executable)
+
     # Load RFB flight data from excel file (after DAS processing OR from Test Card)
     print("\nLoading Tower Fly By Data...") #See sample excel spreadsheet for spreasheet format
 
@@ -332,6 +335,8 @@ def main():
     print(f"\nData for hand faired curve:")
     print(f"Minimum Indicated Mach: {np.min(TFB_results['Mic'])}")
     print(f"Maximum Indicated Mach: {np.max(TFB_results['Mic'])}")
+
+    print(sys.executable)
 
 if __name__ == "__main__":
     main()

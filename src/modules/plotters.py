@@ -120,6 +120,7 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel,
 
     """Plot position correction ratio vs instrument corrected Airspeed"""
     fig4, ax4 = plotter(Mic, dPp_qcic, r"Instrument Corrected Mach Number, ${\mathbf{M_{ic}}}$", r"Static Position Error Pressure Coefficient, ${\mathbf{\Delta P_{p} / q_{cic}}}$")
+    
 
     """Plot temp parameter vs mach parameter"""
     fig5, ax5 = plotter(mach_param, temp_param, r"Mach Parameter, ${\mathbf{M_{ic}^2/5}}$", r"Temperature Parameter, ${\mathbf{T_{ic} / T_{a} - 1}}$")
@@ -154,6 +155,19 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel,
             model_Mic = model_Mic[sort_idx]
             model_Vic = model_Vic[sort_idx]
             model_dPp_qcic = model_dPp_qcic[sort_idx]
+
+            """" Find 95% confidence interval """
+            # Interpolate the model to the points from the data
+            dPp_qcic_interp = np.interp(Mic, model_Mic, model_dPp_qcic)
+            interval = t.interval(0.95, len(Mic)-1)
+            dPp_lower = dPp_qcic_interp  + interval[0]*np.std(dPp_qcic_interp - dPp_qcic)
+            dPp_upper = dPp_qcic_interp  + interval[1]*np.std(dPp_qcic_interp - dPp_qcic)
+
+            # Plot
+            # Sort for plotting
+            sort_idx = np.argsort(Mic)
+            ax4.plot(Mic[sort_idx], dPp_lower[sort_idx], 'k--', dashes=(10,30))
+            ax4.plot(Mic[sort_idx], dPp_upper[sort_idx], 'k--', dashes=(10,30))
 
             """Plot position correction ratio vs instrument corrected airspeed, overaly MIL-P-26292C Mil Spec"""
             # Plot
