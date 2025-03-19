@@ -22,26 +22,6 @@ import matplotlib.pyplot as plt
 import sys
 
 
-class TalonSortieData:
-    def __init__(self, filepath: str):
-        data = pd.read_csv(filepath)
-        # Measured values
-        self.time_s = data["time_s"].to_numpy(dtype=np.float64)
-        self.velocity_north = data["vn_fps"].to_numpy(dtype=np.float64)
-        self.velocity_east = data["ve_fps"].to_numpy(dtype=np.float64)
-        self.velocity_down = data["vd_fps"].to_numpy(dtype=np.float64)
-        self.geometric_height = data["z_ft"].to_numpy(dtype=np.float64)
-        self.total_pressure = data["pt_psi"].to_numpy(dtype=np.float64)
-        self.static_pressure = data["pa_psi"].to_numpy(dtype=np.float64)
-        self.total_temperature = data["tt_k"].to_numpy(dtype=np.float64)
-        self.angle_of_attack = data["aoa_rad"].to_numpy(dtype=np.float64)
-        self.angle_of_sideslip = data["aos_rad"].to_numpy(dtype=np.float64)
-        self.roll = data["phi_rad"].to_numpy(dtype=np.float64)
-        self.pitch = data["theta_rad"].to_numpy(dtype=np.float64)
-        self.yaw = data["psi_rad"].to_numpy(dtype=np.float64)
-        # Derived values
-        self.differential_pressure = self.total_pressure - self.static_pressure
-
 class load_TFB_Data:
     ''' Extract tower flyby data from excel file'''
     def __init__(self, filepath: str):
@@ -183,7 +163,6 @@ class AirDataComputer:
             "dPp_qcic": dPp_qcic
         }
 
-
 class TFB_calculator:
     '''
     Calculator that converts tower flyby data to static position corrections for Mach, Pressure Altitude, and Calibrated Airspeed
@@ -268,13 +247,11 @@ def main():
     print("Initializing atmosphere models...")
     std_atm = StandardAtmosphere()
 
-    print(sys.executable)
-
     # Load RFB flight data from excel file (after DAS processing OR from Test Card)
     print("\nLoading Tower Fly By Data...") #See sample excel spreadsheet for spreasheet format
 
     #use path.join to avoid compatiblity issues between Linux/Windows
-    file_path = os.path.join("PF7111", "TFB_20250307_378_DAS.xlsx") 
+    file_path = os.path.join("PF7111", "TFB_20250317_COBRA36_HAND.xlsx") 
     data = load_TFB_Data(file_path)
 
     # Create a TFB calculator
@@ -331,12 +308,6 @@ def main():
         std_atm,
         model_data=model_data
     )
-
-    print(f"\nData for hand faired curve:")
-    print(f"Minimum Indicated Mach: {np.min(TFB_results['Mic'])}")
-    print(f"Maximum Indicated Mach: {np.max(TFB_results['Mic'])}")
-
-    print(sys.executable)
 
 if __name__ == "__main__":
     main()

@@ -138,7 +138,33 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel,
     # Prepare the handfaired curve data
     if model_data is not None:
         # Extract hand faired curve data
-        """Extract hand faired data curves"""
+        """Extract hand faired data curves for Mach (should the same at all altitudes)"""
+        model_Mic = model_data["2300"]["Mic"]
+        model_dPp_qcic = model_data["2300"]["dPp_qcic"]
+
+        """Plot position correction ratio vs instrument corrected airspeed, overaly MIL-P-26292C Mil Spec"""
+        # Plot
+        fig6, ax6 = plotter(model_Mic, 
+                            model_dPp_qcic, 
+                            r"Instrument Corrected Mach Number, ${\mathbf{M_{ic}}}$", 
+                            r"Static Position Error Pressure Coefficient, ${\mathbf{\Delta P_{p} / q_{cic}}}$", spec=True)
+        
+        # Initiate MIL-P-26292C
+        mil_spec = MIL_P_26292C()
+        mach, curve_top, curve_bottom = mil_spec.curve_a()
+        ax6.plot(mach, curve_top, 'k--', linewidth=0.5)
+        ax6.plot(mach, curve_bottom, 'k--', linewidth=0.5)
+
+        # Curve B
+        mach, curve_top, curve_bottom = mil_spec.curve_b()
+        ax6.plot(mach, curve_top, 'k', linewidth=0.5)
+        ax6.plot(mach, curve_bottom, 'k', linewidth=0.5)
+
+        # Curve B with Noseboom
+        mach, curve_top, curve_bottom = mil_spec.curve_b_NB()
+        ax6.plot(mach, curve_top, 'k--', linewidth=0.5)
+        ax6.plot(mach, curve_bottom, 'k--', linewidth=0.5)
+
         for md in model_data:
             model_dMPc = model_data[md]["dMpc"]
             model_dHpc = model_data[md]["dHpc"]
@@ -169,28 +195,6 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel,
             ax4.plot(Mic[sort_idx], dPp_lower[sort_idx], 'k--', dashes=(10,30))
             ax4.plot(Mic[sort_idx], dPp_upper[sort_idx], 'k--', dashes=(10,30))
 
-            """Plot position correction ratio vs instrument corrected airspeed, overaly MIL-P-26292C Mil Spec"""
-            # Plot
-            fig6, ax6 = plotter(model_Mic, 
-                                model_dPp_qcic, 
-                                r"Instrument Corrected Mach Number, ${\mathbf{M_{ic}}}$", 
-                                r"Static Position Error Pressure Coefficient, ${\mathbf{\Delta P_{p} / q_{cic}}}$", spec=True)
-            
-            # Initiate MIL-P-26292C
-            mil_spec = MIL_P_26292C()
-            mach, curve_top, curve_bottom = mil_spec.curve_a()
-            ax6.plot(mach, curve_top, 'k--', linewidth=0.5)
-            ax6.plot(mach, curve_bottom, 'k--', linewidth=0.5)
-
-            # Curve B
-            mach, curve_top, curve_bottom = mil_spec.curve_b()
-            ax6.plot(mach, curve_top, 'k', linewidth=0.5)
-            ax6.plot(mach, curve_bottom, 'k', linewidth=0.5)
-
-            # Curve B with Noseboom
-            mach, curve_top, curve_bottom = mil_spec.curve_b_NB()
-            ax6.plot(mach, curve_top, 'k--', linewidth=0.5)
-            ax6.plot(mach, curve_bottom, 'k--', linewidth=0.5)
 
             # Add data to Mach correction plot
             ax1.plot(model_Mic, model_dMPc, 'k')
@@ -203,7 +207,8 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel,
 
             # Add data to position error comparison plot
             ax4.plot(model_Mic, model_dPp_qcic, 'k')
-            fig6.savefig(os.path.join("PF7111","plots", "dPp_qcic_vs_Mic_MIL_SPEC.png"))
+
+        fig6.savefig(os.path.join("PF7111","plots", "dPp_qcic_vs_Mic_MIL_SPEC.png"))
 
     fig1.savefig(os.path.join("PF7111","plots","dMpc_vs_Mic.png"))
     fig2.savefig(os.path.join("PF7111","plots", "dHpc_vs_Vic.png"))
