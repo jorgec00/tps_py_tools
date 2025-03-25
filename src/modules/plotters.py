@@ -12,8 +12,10 @@ plt.rcParams.update({
     'axes.labelweight': 'bold',  # Font weight for x- and y-labels
     'axes.titleweight': 'bold',  # Font weight for figure title
     'axes.grid': True,
-    'xtick.labelsize': 16,        # Font size for x-tick labels
-    'ytick.labelsize': 16,        # Font size for y-tick labels
+    'xtick.labelsize': 15,        # Font size for x-tick labels
+    'ytick.labelsize': 15,        # Font size for y-tick labels
+    'lines.linewidth': 2.5,
+    'figure.constrained_layout.use': True
     # (Leave tick params as defaults)
 })
 
@@ -124,15 +126,18 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel,
 
     """Plot temp parameter vs mach parameter"""
     fig5, ax5 = plotter(mach_param, temp_param, r"Mach Parameter, ${\mathbf{M_{ic}^2/5}}$", r"Temperature Parameter, ${\mathbf{T_{ic} / T_{a} - 1}}$")
-    ax5.plot(mach_param, temp_param_pred, 'k', linewidth=0.5)
+    ax5.plot(mach_param, temp_param_pred, 'k', linewidth=1)
     # Calculate 95% prediction interval from Student T
     interval = t.interval(0.95, len(temp_param)-1)
     temp_lower = temp_param_pred + interval[0]*np.std(temp_param_pred - temp_param)
     temp_upper = temp_param_pred + interval[1]*np.std(temp_param_pred - temp_param)
     # Overlay
-    ax5.plot(mach_param, temp_lower, 'k--', dashes=(10,30))
-    ax5.plot(mach_param, temp_upper, 'k--', dashes=(10,30))
-
+    ax5.plot(mach_param, temp_lower, 'k--', dashes=(15,30))
+    ax5.plot(mach_param, temp_upper, 'k--', dashes=(15,30))
+    # plot the Kt = 1 and intercept zero curve for comparison
+    ax5.plot(mach_param, mach_param, 'k', linewidth=1, label=r"$\mathbf{K_{t} = 1}$")
+    ax5.set_xlim([-0.01, 0.18])
+    ax5.set_ylim([-0.01, 0.18])
 
 
     # Prepare the handfaired curve data

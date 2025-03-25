@@ -267,15 +267,6 @@ def main():
         data.tower_temperature,
         data.indicated_temperature
     )
-    '''
-    # Save mach and dPp_qcic in excel handfaired estimates
-    print("\nSaving results to excel file...")
-    results_df = pd.DataFrame({
-        "Mic": TFB_results["Mic"],
-        "dPp_qcic": TFB_results["dPp_qcic"]
-    })
-    results_df.to_excel(os.path.join("PF7111", "TFB_20250307_378_results.xlsx"), index=False)
-    '''
 
     # Load hand faired position error curve (comment out if no curve found yet)
     print("\nLoading hand faired curve data...")
@@ -296,10 +287,12 @@ def main():
     model_data_2300 = ADC.generate_model_data(np.float64(2300), model=error_model)
     model_data_10K = ADC.generate_model_data(np.float64(10000), model=error_model)
     model_data_20k = ADC.generate_model_data(np.float64(20000), model=error_model)
+    model_data_30k = ADC.generate_model_data(np.float64(30000), model=error_model)
     model_data = pd.DataFrame({
         "2300": model_data_2300,
         "10000": model_data_10K,
         "20000": model_data_20k,
+        "30000": model_data_30k
     })
 
     # Plot position error analysis
