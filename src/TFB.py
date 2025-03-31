@@ -19,7 +19,6 @@ from modules.helpers import *
 from modules.plotters import plot_static_position_error_analysis
 import os
 import matplotlib.pyplot as plt
-import sys
 
 
 class load_TFB_Data:
@@ -242,7 +241,7 @@ class TFB_calculator:
                 "mach_param": mach_param,
                 "temp_pred": temp_pred}
     
-def main():
+def TFB():
     # Initialize atmosphere models
     print("Initializing atmosphere models...")
     std_atm = StandardAtmosphere()
@@ -251,7 +250,7 @@ def main():
     print("\nLoading Tower Fly By Data...") #See sample excel spreadsheet for spreasheet format
 
     #use path.join to avoid compatiblity issues between Linux/Windows
-    file_path = os.path.join("PF7111", "TFB_20250307_378_DAS.xlsx") 
+    file_path = os.path.join("ADS_Calibration", "TFB_ALLCOBRA_HAND.xlsx") 
     data = load_TFB_Data(file_path)
 
     # Create a TFB calculator
@@ -267,20 +266,11 @@ def main():
         data.tower_temperature,
         data.indicated_temperature
     )
-    '''
-    # Save mach and dPp_qcic in excel handfaired estimates
-    print("\nSaving results to excel file...")
-    results_df = pd.DataFrame({
-        "Mic": TFB_results["Mic"],
-        "dPp_qcic": TFB_results["dPp_qcic"]
-    })
-    results_df.to_excel(os.path.join("PF7111", "TFB_20250307_378_results.xlsx"), index=False)
-    '''
 
     # Load hand faired position error curve (comment out if no curve found yet)
     print("\nLoading hand faired curve data...")
     #use path.join to avoid compatiblity issues between Linux/Windows
-    model_data = pd.read_excel(os.path.join("PF7111", "hand_faired_curve.xlsx"))
+    model_data = pd.read_excel(os.path.join("ADS_Calibration", "hand_faired_curve.xlsx"))
     error_model = dict({
         "Mic": model_data["Mic"].to_numpy(dtype=np.float64),
         "dPp_qcic": model_data["dPp_qcic"].to_numpy(dtype=np.float64),
@@ -296,10 +286,12 @@ def main():
     model_data_2300 = ADC.generate_model_data(np.float64(2300), model=error_model)
     model_data_10K = ADC.generate_model_data(np.float64(10000), model=error_model)
     model_data_20k = ADC.generate_model_data(np.float64(20000), model=error_model)
+    model_data_30k = ADC.generate_model_data(np.float64(30000), model=error_model)
     model_data = pd.DataFrame({
         "2300": model_data_2300,
         "10000": model_data_10K,
         "20000": model_data_20k,
+        "30000": model_data_30k
     })
 
     # Plot position error analysis
@@ -310,5 +302,5 @@ def main():
     )
 
 if __name__ == "__main__":
-    main()
+    TFB()
 

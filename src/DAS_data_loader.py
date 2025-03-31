@@ -162,10 +162,10 @@ class TalonSortieData:
 def DAS_data_loader():
     # Load DAS data
     print("\nLoading Viper DAS Sortie Data...")
-    sortie = ViperSortieData(os.path.join("PF7111", "TFB_20250307_378_DAS_RAW.csv"))
+    sortie = ViperSortieData(os.path.join("ADS_Calibration", "TFB_20250307_378_DAS_RAW.csv"))
 
     # Extract event markers and data and save to EXCEL file
-    sortie.extract_events(os.path.join("PF7111", "TFB_20250307_378_DAS_EXTRACTED.xlsx"))
+    sortie.extract_events(os.path.join("ADS_Calibration", "TFB_20250307_378_DAS_EXTRACTED.xlsx"))
     
     # Plot the TFB run for a given event marker
     marker_plot = 2 # Change this to the event marker you want to plot
