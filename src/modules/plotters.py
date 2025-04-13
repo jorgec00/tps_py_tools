@@ -216,7 +216,7 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel,
         fig6.savefig(os.path.join("ADS_Calibration","plots", "dPp_qcic_vs_Mic_MIL_SPEC.png"))
 
     fig1.savefig(os.path.join("ADS_Calibration","plots","dMpc_vs_Mic.png"))
-    fig2.savefig(os.path.join("ADS_alibration","plots", "dHpc_vs_Vic.png"))
+    fig2.savefig(os.path.join("ADS_Calibration","plots", "dHpc_vs_Vic.png"))
     fig3.savefig(os.path.join("ADS_Calibration","plots", "dVpc_vs_Vic.png"))
     fig4.savefig(os.path.join("ADS_Calibration","plots", "dPp_qcic_vs_Mic.png"))
     fig5.savefig(os.path.join("ADS_Calibration","plots", "temp_mach.png"))
