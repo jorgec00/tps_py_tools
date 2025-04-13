@@ -53,7 +53,7 @@ def calculate_calibrated_pressure_differential_ratio(Vc: np.ndarray) -> np.ndarr
     Calculate qc_psl = (PT - Pa)/psl for a given mach number and pressure altitude
     
     Args:
-        Vc: array of mach numbers
+        Vc: array of calibrated airspeed
         
     Returns:
         qc_psl: pressure differential ratio (at sea level, aka calibrated) for the given 
