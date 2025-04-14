@@ -224,4 +224,23 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel,
 
     plt.show()
 
-        
+def plot_energy_height_mach(time: np.float64, Eh: np.float64, mach: np.float64):
+    """Plot energy height over time"""
+    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.plot(time, Eh, 'ks', markerfacecolor='None',label='Energy Height')
+    ax.set_xlabel('Time, t (s)', family='sans-serif')
+    ax.set_ylabel('Energy Height, ${\mathbf{E_{s}}}$ (ft)', family='sans-serif')
+    ax.minorticks_on()
+
+    """add mach number overlay"""
+    ax2 = ax.twinx()
+    ax2.plot(time, mach, 'k^', markerfacecolor='None', label='Mach Number')
+    ax2.set_ylabel('Mach Number, ${\mathbf{M_{ic}}}$', family='sans-serif')
+    ax2.minorticks_on()
+    ax2.set_ylim([0, 1.0])
+
+    fig.tight_layout()
+    fig.savefig(os.path.join("Performance","plots", "energy_height.png"))
+    plt.show()
+
+    return fig, ax

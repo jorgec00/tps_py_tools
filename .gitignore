@@ -2,3 +2,4 @@ venv/
 src/modules/__pycache__/
 ADS_Calibration/TFB_20250307_378_DAS_RAW.csv
 ADS_Calibration/plots/
+Performance/flight_data.csv

@@ -120,7 +120,7 @@ def calculate_pressure_altitude(pressure_ratio: np.ndarray) -> np.ndarray:
     return H_c
 
 
-def root(f, a: float, b: float, tol: float = 1e-6, max_iter: int = 100) -> float:
+def root(f, a: float, b: float, tol: float = 1e-6, max_iter: int = 200) -> float:
     """
     Find root of f(x) = 0 using bisection method.
 
@@ -189,7 +189,7 @@ def calculate_mach(qc: np.ndarray, pa: np.ndarray) -> np.ndarray:
 
     def supersonic_zero_func(qc_pa: float, mach: float) -> float:
         """Zero function for supersonic Mach calculation."""
-        super_mach_0 = super_mach_0  =(mach - 0.881284 * np.sqrt(
+        super_mach_0 = (mach - 0.881284 * np.sqrt(
             (qc_pa + 1) * (1 - 1 / (7 * mach ** 2)) ** (5 / 2)
         ))
         return super_mach_0
@@ -214,9 +214,10 @@ def calculate_mach(qc: np.ndarray, pa: np.ndarray) -> np.ndarray:
     # Refine using root finding
     mach = np.zeros_like(qc_pa)
     for i, (qp, m0) in enumerate(zip(qc_pa, mach_estimates)):
+        #print(f"i: {i}, qp: {qp}, m0: {m0}")
         # Define target function for this pressure ratio
-        def target(m):
-            return combined_zero_func(qp, m)
+        def target(m0):
+            return combined_zero_func(qp, m0)
 
         # Find root using provided bisection method
         # Use appropriate brackets based on initial estimate
@@ -227,8 +228,8 @@ def calculate_mach(qc: np.ndarray, pa: np.ndarray) -> np.ndarray:
                 mach[i] = root(target, 1.0, 5.0)
             except ValueError:  # If no supersonic solution, try subsonic
                 mach[i] = root(target, 0, 1)
-
-    return mach
+    
+    return mach_estimates
 
 
 def calculate_true_airspeed(mach: np.ndarray, temperature_ratio: np.ndarray) -> np.ndarray:
@@ -256,11 +257,6 @@ def calculate_true_airspeed(mach: np.ndarray, temperature_ratio: np.ndarray) -> 
     valid_mask = (np.isfinite(mach) & np.isfinite(temperature_ratio) & (temperature_ratio > 0))
     tas[valid_mask] = (mach[valid_mask] * constants.SPEED_OF_SOUND_SEA_LEVEL *
                        np.sqrt(temperature_ratio[valid_mask]))
-
-    # Report percentage of valid calculations
-    valid_percent = 100 * np.sum(valid_mask) / len(mach)
-    if valid_percent < 100:
-        print(f"Warning: TAS calculation valid for {valid_percent:.1f}% of points")
 
     return tas
 
@@ -299,6 +295,8 @@ def calculate_equivalent_airspeed(mach: np.ndarray, pressure_ratio: np.ndarray) 
     return eas
 
 def calculate_calibrated_airspeed(qc_psl: np.ndarray) -> np.ndarray:
+
+
     """
     Calculated clibrated airspeed (Vc) from the calibrated differential pressure ratio qc / Psl
     
@@ -355,3 +353,33 @@ def calculate_calibrated_airspeed(qc_psl: np.ndarray) -> np.ndarray:
                 Vc[i] = root(target, 0, constants.SPEED_OF_SOUND_SEA_LEVEL)
 
     return Vc
+
+def centered_moving_average(data: np.ndarray, window_size: int) -> np.ndarray:
+    """
+    Smooth the data by taking the centered moving average. 
+
+    Args:
+        data: Input array (1D)
+        window_size: Size of the window for averaging
+
+    Returns:
+        Array of smoothed data with NaN for edges where moving average cannot be computed
+    """
+
+    if window_size <= 0:
+        raise ValueError("Window size must be positive")
+    
+    if len(data) < window_size:
+        return np.full_like(data, np.nan, dtype=np.float64)
+    
+    if window_size % 2 == 0:
+        raise ValueError('Window size must be odd for centered moving average')
+    
+    half_window = window_size // 2
+
+    # Build padded vector
+    padded = np.pad(data, (half_window, half_window), mode='edge')
+
+    # Convolve
+    smoothed = np.convolve(padded, np.ones(window_size)/window_size, mode='valid')
+    return smoothed
