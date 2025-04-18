@@ -230,6 +230,11 @@ def plot_energy_height_mach(time: np.float64, Eh: np.float64, mach: np.float64):
     ax.plot(time, Eh, 'ks', markerfacecolor='None',label='Energy Height')
     ax.set_xlabel('Time, t (s)', family='sans-serif')
     ax.set_ylabel('Energy Height, ${\mathbf{E_{s}}}$ (ft)', family='sans-serif')
+    y_max = 150001
+    y_min = 0
+    yticks = np.arange(y_min, y_max, 10000)
+    ax.set_yticks(yticks)
+    ax.set_ylim([y_min, y_max])
     ax.minorticks_on()
 
     """add mach number overlay"""
@@ -237,7 +242,11 @@ def plot_energy_height_mach(time: np.float64, Eh: np.float64, mach: np.float64):
     ax2.plot(time, mach, 'k^', markerfacecolor='None', label='Mach Number')
     ax2.set_ylabel('Mach Number, ${\mathbf{M_{ic}}}$', family='sans-serif')
     ax2.minorticks_on()
-    ax2.set_ylim([0, 1.0])
+    #mach_ticks = np.interp(yticks, (y_min, y_max), (0, 1.0))
+    #ax2.set_yticks(yticks)
+    #ax2.set_yticklabels([f"{val:.2f}" for val in mach_ticks])
+    ax2.set_ylim(0, 1)  # Match Eh axis limits
+
 
     fig.tight_layout()
     fig.savefig(os.path.join("Performance","plots", "energy_height.png"))

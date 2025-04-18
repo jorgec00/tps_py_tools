@@ -19,6 +19,7 @@ from modules.plotters import plot_energy_height_mach
 import os
 
 class LJ_IADS_flight_data:
+
     def __init__(self, filename: str):
         """
         Import IADS data from a CSV file.
@@ -27,6 +28,7 @@ class LJ_IADS_flight_data:
             str (filename): Path to the CSV file containing IADS data.
             
         Returns:
+            Class instance with the following attributes:
             - Time
             - Instrument Corrected Airspeed
             - Instrument Corrected Altitude
@@ -93,6 +95,76 @@ class LJ_IADS_flight_data:
         df['energy_height'] = energy_height
 
         return df
+    
+class LJ_hand_flight_data:
+    
+    def __init__(self, filename: str):
+        """
+        Import flight data from a csv file created from test card, hand collected data.
+        
+        Args:
+            - str (filename): Path to the CSV file containing hand collected data. The data should be formatted in columns as follows:
+                -- Time (mm:ss) from start of maneuver
+                -- Calibrated Airspeed (kts)
+                -- Indicated Altitude (feet)
+            
+        Returns:
+            Class instance with the following attributes:
+            - Time (in second from start of maneuver)
+            - Calibrated Airspeed (kts)
+            - Indicated Altitude (ft)
+
+        """
+        data = pd.read_csv(filename)
+        self.time = data['Time']
+        seconds = np.array([x.split(':')[1] for x in self.time], dtype=np.float64)
+        minutes = np.array([x.split(':')[0] for x in self.time], dtype=np.float64)
+        self.time = minutes * 60 + seconds # convert time to seconds
+        self.time = self.time - self.time[0]  # Start time at zero seconds
+        self.Vic = data['CalibratedAirspeed'].to_numpy(np.float64) * 1.6878 # to fps
+        self.Hic = data['Altitude'].to_numpy(np.float64) # feet
+
+    def process_level_accel(self, Tic: np.float64) -> pd.DataFrame:
+        """Process the hand data to extract energy height and Mach number for level acceleration.
+        
+        Args:
+            - Tic: Recorded flight temperature (Kelvin)
+
+        Returns:
+            - Class instance containing the following;
+                -- Time since beginning of maneuver
+                -- Calibrated Airspeed (kts)
+                -- Indicated Altitude (ft)
+                -- Energy height at each calibrated airspeed
+                -- Mach number at each calibrated airspeed
+                -- Specific excess power at each calibrated airspeed
+        
+        """
+        # Start output data frame
+        df = pd.DataFrame()
+
+        # Format temperature like the Vic data
+        self.Tic = np.full(self.Vic.shape, Tic)
+
+        # Create a standard atmosphere object
+        atm = StandardAtmosphere()
+
+        # Calculate true airspeed
+        qcic_psl = calculate_calibrated_pressure_differential_ratio(self.Vic)
+        qcic_ps = qcic_psl / atm.delta(self.Hic)
+        ps = atm.delta(self.Hic) * atm.constants.PRESSURE_SEA_LEVEL
+        qcic = qcic_ps * ps
+        Mic = calculate_mach(qcic, ps)
+        Vt = calculate_true_airspeed(Mic, self.Tic/atm.constants.TEMP_SEA_LEVEL)
+
+        # Calculate energy height over time
+        energy_height = self.Hic + Vt**2 / 2
+
+        # Append Mic and energy height to dataframe
+        self.Mic = Mic
+        self.energy_height = energy_height
+
+        return df
 
         
 
@@ -102,13 +174,17 @@ def performance():
     filename = os.path.join('Performance', 'flight_data.csv')
 
     """Data import and pre-processing"""
-    # Import flight data
+    # Import flight data from IADS
     flight_data = LJ_IADS_flight_data(filename)
+
+    # Import flight data from handwritten data
+    #flight_data = LJ_handwritten_flight_data(filename)
 
     # Process level acelleration data
     speeds = np.array([257, 258, 259, 260, 261, 262, 263])
     # Recorded flight temp
     Tic = -10 + 273.15  # Celsius to Kelvin
+
     # Process data
     LA_data = flight_data.process_level_accel(speeds, Tic)
     # Extract energy height and Mach number
@@ -119,8 +195,7 @@ def performance():
 
     # Plot
     plot_energy_height_mach(time, energy_height, Mic)
+    print(energy_height)
 
 if __name__ == "__main__":
     performance()
-
-
