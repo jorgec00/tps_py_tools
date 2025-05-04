@@ -246,10 +246,10 @@ def plot_energy_height_mach(time: np.float64, Eh: np.float64, mach: np.float64):
     mach_ticks = np.interp(yticks, (y_min, y_max), (0, 1.0))
     ax2.set_yticks(mach_ticks)
     ax2.set_yticklabels([f"{val:.2f}" for val in mach_ticks])
-    ax2.set_ylim(0, 1)  # Match Eh axis limits
+    ax2.set_ylim(0, 1) 
 
 
     fig.tight_layout()
     plt.show()
-
+    
     return fig, ax
