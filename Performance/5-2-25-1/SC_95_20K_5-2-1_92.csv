@@ -1,0 +1,4 @@
+Time (s),Altitude (ft),Airspeed (KCAS),Fuel (thousand lbs),Temperature (C)
+0:20:08,19500,293,3,2
+0:20:19,20000,293,3,0
+0:20:30,20500,293,3,-2

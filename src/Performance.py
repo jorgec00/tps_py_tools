@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from modules.std_atm import *
 import pandas as pd
 from modules.helpers import *
-from modules.plotters import plot_energy_height_mach
+from modules.plotters import plot_energy_height_mach, plot_Ps
 import os
 
 class LJ_IADS_flight_data:
@@ -117,7 +117,16 @@ class LJ_hand_flight_data:
 
         """
         data = pd.read_csv(filename)
-        self.time = data['Time (s)'].to_numpy(np.float64)  # Time in seconds from start of maneuver
+        # Seperate time by colon
+        time_array = data['Time (s)'].str.split(':', expand=True)
+        # Convert columns to float
+        hh = time_array[0].astype(np.float64)
+        mm = time_array[1].astype(np.float64)
+        ss = time_array[2].astype(np.float64)
+        # Calculate total seconds
+        time = hh * 3600 + mm * 60 + ss
+        # Calculate time from start of maneuver 
+        self.time = time - time[0] # Time in seconds from start of maneuver
         self.Vic = data['Airspeed (KCAS)'].to_numpy(np.float64) * 1.6878 # to fps
         self.Hic = data['Altitude (ft)'].to_numpy(np.float64) # feet
         self.Tic = data['Temperature (C)'].to_numpy(np.float64) + 273.15  # Celsius to Kelvin
@@ -152,7 +161,7 @@ class LJ_hand_flight_data:
 
         # Calculate energy height over time
         energy_height = self.Hic + Vt**2 / 2 / constants.GRAVITY_SEA_LEVEL
-
+        
         # Append Mic and energy height to dataframe
         self.Mic = Mic
         self.energy_height = energy_height
@@ -163,7 +172,7 @@ class LJ_hand_flight_data:
 def performance():
     """ Main Function """
     # Specify data file name
-    filename = os.path.join('Performance', 'LA_95_10K.csv')
+    filename = os.path.join('Performance','5-2-25-1', 'LA_95_10K_5-2-1.csv')
 
     """Data import and pre-processing"""
     # Import flight data from IADS/hand collected data
@@ -172,23 +181,18 @@ def performance():
     # Process data
     LA_data = flight_data.process_level_accel()
 
+    # Add hand-faired data curves to energy height and Mach number plot
+    hand_data = pd.read_csv(os.path.join('Performance','5-2-25-1','LA_95_10K_hand_curve.csv'))
+
     # Plot
-    (fig, ax) = plot_energy_height_mach(LA_data.time, LA_data.energy_height, LA_data.Mic)
-   
-
-    # TODO: add hand-faired data curves to energy height and Mach number plot
-    '''
-    hand_curve.time = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90])  # Example time in seconds
-    hand_curve.energy_height = np.array([20, 21, 22, 23, 24, 25, 26, 27, 28, 29]) * 1000  # Example energy height in feet
-    hand_curve.Mic = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])  # Example Mach number
-    ax.plot(hand_curve.time, hand_curve.energy_height, 'k-')
-    ax.plot(hand.curve.time, hand_curve.Mic, 'k-')
-    '''
-
+    (fig, ax) = plot_energy_height_mach(LA_data.time, LA_data.energy_height, LA_data.Mic, hand_data)
+    
     # TODO: Calculate specfic excess power from hand-faired data curves
-    '''
-    Ps = np.gradient(hand_curve.energy_height, hand_curve.time)
-    '''
+    Ps = np.gradient(hand_data['Eh (ft)'], hand_data['Time (s)'])
+    print(Ps)
+
+    # Plot Ps on its own plot
+    (fig, ax) = plot_Ps(hand_data, Ps)
 
     # TODO: Import and process SAWTOOTH CLIMB data for ??each altitude??
     '''

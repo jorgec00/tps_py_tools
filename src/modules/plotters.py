@@ -224,16 +224,16 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel,
 
     plt.show()
 
-def plot_energy_height_mach(time: np.float64, Eh: np.float64, mach: np.float64):
+def plot_energy_height_mach(time: np.float64, Eh: np.float64, mach: np.float64, hand_data: pd.array = None):
     """Plot energy height over time"""
     fig, ax = plt.subplots(figsize=(12, 8))
     ax.plot(time, Eh, 'ks', markerfacecolor='None',label='Energy Height')
     ax.set_xlabel('Time, t (s)', family='sans-serif')
-    ax.set_ylabel('Energy Height, ${\mathbf{E_{s}}}$ (ft)', family='sans-serif')
-    y_max = 30000
-    y_min = 20000
+    ax.set_ylabel('Energy Height, ${\mathbf{E_{s}}}$ (ft)')
+    y_max = (np.ceil(np.max(Eh / 5000)))*5000
+    y_min = (np.floor(np.min(Eh / 5000)))*5000
     y_interval = 2500
-    yticks = np.arange(y_min, y_max+y_interval, y_interval)
+    yticks = np.arange(y_min-y_interval, y_max+y_interval, y_interval)
     ax.set_yticks(yticks)
     ax.set_ylim([y_min, y_max])
     ax.minorticks_on()
@@ -241,15 +241,33 @@ def plot_energy_height_mach(time: np.float64, Eh: np.float64, mach: np.float64):
     """add mach number overlay"""
     ax2 = ax.twinx()
     ax2.plot(time, mach, 'k^', markerfacecolor='None', label='Mach Number')
-    ax2.set_ylabel('Mach Number, ${\mathbf{M_{ic}}}$', family='sans-serif')
+    ax2.set_ylabel('Mach Number, ${\mathbf{M_{ic}}}$')
     ax2.minorticks_on()
-    mach_ticks = np.interp(yticks, (y_min, y_max), (0, 1.0))
+    mach_ticks = np.interp(yticks, (y_min, y_max), (0.2, 1))
     ax2.set_yticks(mach_ticks)
     ax2.set_yticklabels([f"{val:.2f}" for val in mach_ticks])
-    ax2.set_ylim(0, 1) 
+    ax2.set_ylim(0.2, 1) 
 
+    if hand_data is not None:
+       hand_time = hand_data['Time (s)'].to_numpy(np.float64)
+       hand_Eh = hand_data['Eh (ft)'].to_numpy(np.float64)
+       hand_Mic = hand_data['Mic'].to_numpy(np.float64)
 
-    fig.tight_layout()
+       ax.plot(hand_time, hand_Eh, 'k-')
+       ax2.plot(hand_time, hand_Mic, 'k-')
+       
+       
+
     plt.show()
     
+    return fig, ax
+
+def plot_Ps(hand_data: pd.array, Ps: np.array, SC_data: np.array = None):
+    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.plot(hand_data['Mic'], Ps, 'k-', markerfacecolor='None')
+    ax.set_xlabel('Time, t (s)',  family='sans-serif')
+    ax.set_ylabel('Specific Excess Power, (ft/s)', family='sans-serif')
+    ax.plot(0.64, 40, 'ko', markerfacecolor='none')
+    plt.show()
+
     return fig, ax
