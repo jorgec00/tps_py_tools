@@ -14,7 +14,7 @@ plt.rcParams.update({
     'axes.grid': True,
     'xtick.labelsize': 15,        # Font size for x-tick labels
     'ytick.labelsize': 15,        # Font size for y-tick labels
-    'lines.linewidth': 2.5,
+    'lines.linewidth': 1.5,
     'figure.constrained_layout.use': True
     # (Leave tick params as defaults)
 })
@@ -258,16 +258,22 @@ def plot_energy_height_mach(time: np.float64, Eh: np.float64, mach: np.float64, 
        
        
 
-    plt.show()
+    #plt.show()
     
     return fig, ax
 
-def plot_Ps(hand_data: pd.array, Ps: np.array, SC_data: np.array = None):
+def plot_Ps(hand_data: pd.array, Ps: np.array, SC_data: pd.DataFrame = None):
+    # Plot the hand-faired Ps curves
     fig, ax = plt.subplots(figsize=(12, 8))
     ax.plot(hand_data['Mic'], Ps, 'k-', markerfacecolor='None')
-    ax.set_xlabel('Time, t (s)',  family='sans-serif')
+    ax.set_xlabel('Mach Number, ${\mathbf{M_{ic}}}$',  family='sans-serif')
     ax.set_ylabel('Specific Excess Power, (ft/s)', family='sans-serif')
-    ax.plot(0.64, 40, 'ko', markerfacecolor='none')
+    ax.plot(0.64, 83, 'ko', markerfacecolor='none')
+
+    # Add the SC data
+    if SC_data is not None:
+        ax.plot(SC_data['Mic'], SC_data['Ps'], 'kx', markerfacecolor='None', label='Sawtooth Climb')
+    
     plt.show()
 
     return fig, ax

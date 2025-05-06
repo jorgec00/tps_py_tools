@@ -1,22 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# # PF7111A Performance Reporting
-# **See:** Erb, Russell E. “Pitot-Statics and the Standard Atmosphere, 4th Ed.” Edwards AFB, CA: USAF Test Pilot School, July 2020.
-# 
-# **Authors:** Jorge Cervantes
-# 
-# **Date:13 April 2025**
-# 
-
-# ------------------------------------------------------------------------------------------------------------------------------
 import numpy as np
-from dataclasses import dataclass
 from modules.std_atm import *
 import pandas as pd
 from modules.helpers import *
-from modules.plotters import plot_energy_height_mach, plot_Ps
-import os
 
 class LJ_IADS_flight_data:
 
@@ -35,7 +20,7 @@ class LJ_IADS_flight_data:
 
         """
         data = pd.read_csv(filename)
-        self.time = data['Time']
+        self.time = data['Time (s)']
         seconds = np.array([x.split(':')[-1] for x in self.time], dtype=np.float64)
         minutes = np.array([x.split(':')[-2] for x in self.time], dtype=np.float64)
         hours = np.array([x.split(':')[-3] for x in self.time], dtype=np.float64)
@@ -96,7 +81,7 @@ class LJ_IADS_flight_data:
 
         return df
     
-class LJ_hand_flight_data:
+class LJ_hand_LASC_flight_data:
     
     def __init__(self, filename: str):
         """
@@ -126,8 +111,8 @@ class LJ_hand_flight_data:
         # Calculate total seconds
         time = hh * 3600 + mm * 60 + ss
         # Calculate time from start of maneuver 
-        self.time = time - time[0] # Time in seconds from start of maneuver
-        self.Vic = data['Airspeed (KCAS)'].to_numpy(np.float64) * 1.6878 # to fps
+        self.time = np.array(time - time[0]) # Time in seconds from start of maneuver
+        self.Vic = (data['Airspeed (KCAS)'].to_numpy(np.float64)) * 1.6878 # to fps (-4 is position corrected speed)
         self.Hic = data['Altitude (ft)'].to_numpy(np.float64) # feet
         self.Tic = data['Temperature (C)'].to_numpy(np.float64) + 273.15  # Celsius to Kelvin
 
@@ -160,55 +145,44 @@ class LJ_hand_flight_data:
         Vt = calculate_true_airspeed(Mic, self.Tic/atm.constants.TEMP_SEA_LEVEL)
 
         # Calculate energy height over time
-        energy_height = self.Hic + Vt**2 / 2 / constants.GRAVITY_SEA_LEVEL
+        energy_height = self.Hic + Vt**2 / (2 * atm.constants.GRAVITY_SEA_LEVEL)
         
         # Append Mic and energy height to dataframe
         self.Mic = Mic
         self.energy_height = energy_height
+        
 
         return self
 
+    def process_SC(self):
+        """Process the hand data to extract Ps and Mach for sawtooth climb.
         
-def performance():
-    """ Main Function """
-    # Specify data file name
-    filename = os.path.join('Performance','5-2-25-1', 'LA_95_10K_5-2-1.csv')
+        Args:
+            - None
 
-    """Data import and pre-processing"""
-    # Import flight data from IADS/hand collected data
-    flight_data = LJ_hand_flight_data(filename)
+        Returns:
+            - Class instance containing the following:
+                -- Ps at the average Mach number
+                -- Average Mach number
+        
+        """
 
-    # Process data
-    LA_data = flight_data.process_level_accel()
+        # Create a standard atmosphere object
+        atm = StandardAtmosphere()
 
-    # Add hand-faired data curves to energy height and Mach number plot
-    hand_data = pd.read_csv(os.path.join('Performance','5-2-25-1','LA_95_10K_hand_curve.csv'))
+        # Calculate true airspeed
+        qcic_psl = calculate_calibrated_pressure_differential_ratio(self.Vic)
+        qcic_ps = qcic_psl / atm.delta(self.Hic)
+        ps = atm.delta(self.Hic) * atm.constants.PRESSURE_SEA_LEVEL
+        qcic = qcic_ps * ps
+        Mic = calculate_mach(qcic, ps)
 
-    # Plot
-    (fig, ax) = plot_energy_height_mach(LA_data.time, LA_data.energy_height, LA_data.Mic, hand_data)
-    
-    # TODO: Calculate specfic excess power from hand-faired data curves
-    Ps = np.gradient(hand_data['Eh (ft)'], hand_data['Time (s)'])
-    print(Ps)
+        # Calculate Ps from dH/dt
+        Ps = (self.Hic[-1] - self.Hic[0])/(self.time[-1] - self.time[0])
+        
+        
+        # Append Mic and energy height to dataframe
+        self.Mic = np.mean(Mic)
+        self.Ps = Ps
 
-    # Plot Ps on its own plot
-    (fig, ax) = plot_Ps(hand_data, Ps)
-
-    # TODO: Import and process SAWTOOTH CLIMB data for ??each altitude??
-    '''
-    filename = os.path.join('Performance', 'SC_95_20K.csv')
-    flight_data = LJ_hand_flight_data(filename)
-    SC_data = flight_data.process_SC()
-    # Extract energy height and Mach number
-    energy_height_SC = SC_data.energy_height
-    Mic_SC = SC_data.Mic
-    '''
-
-    # TODO: Plot sawtooth climb data and specific excess power and specification
-    '''
-    
-    '''
-
-
-if __name__ == "__main__":
-    performance()
+        return self
