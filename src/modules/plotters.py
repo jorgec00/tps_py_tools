@@ -226,13 +226,13 @@ def plot_static_position_error_analysis(results: dict, std_atm: AtmosphereModel,
 
 def plot_energy_height_mach(time: np.float64, Eh: np.float64, mach: np.float64, hand_data: pd.array = None):
     """Plot energy height over time"""
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(12, 6))
     ax.plot(time, Eh, 'ks', markerfacecolor='None',label='Energy Height')
     ax.set_xlabel('Time, t (s)', family='sans-serif')
     ax.set_ylabel('Energy Height, ${\mathbf{E_{s}}}$ (ft)')
-    y_max = (np.ceil(np.max(Eh / 5000)))*5000
-    y_min = (np.floor(np.min(Eh / 5000)))*5000
-    y_interval = 2500
+    y_max = (np.ceil(np.max(Eh / 500)))* 500
+    y_min = (np.floor(np.min(Eh / 500))) * 500 - 500
+    y_interval = 500
     yticks = np.arange(y_min-y_interval, y_max+y_interval, y_interval)
     ax.set_yticks(yticks)
     ax.set_ylim([y_min, y_max])
@@ -243,10 +243,10 @@ def plot_energy_height_mach(time: np.float64, Eh: np.float64, mach: np.float64, 
     ax2.plot(time, mach, 'k^', markerfacecolor='None', label='Mach Number')
     ax2.set_ylabel('Mach Number, ${\mathbf{M_{ic}}}$')
     ax2.minorticks_on()
-    mach_ticks = np.interp(yticks, (y_min, y_max), (0.2, 1))
+    mach_ticks = np.interp(yticks, (y_min, y_max), (0, 0.8))
     ax2.set_yticks(mach_ticks)
     ax2.set_yticklabels([f"{val:.2f}" for val in mach_ticks])
-    ax2.set_ylim(0.2, 1) 
+    ax2.set_ylim(0, 0.8) 
 
     if hand_data is not None:
        hand_time = hand_data['Time (s)'].to_numpy(np.float64)
@@ -262,18 +262,12 @@ def plot_energy_height_mach(time: np.float64, Eh: np.float64, mach: np.float64, 
     
     return fig, ax
 
-def plot_Ps(hand_data: pd.array, Ps: np.array, SC_data: pd.DataFrame = None):
+def plot_Ps(hand_data: pd.array, Ps: np.array):
     # Plot the hand-faired Ps curves
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(12, 6))
     ax.plot(hand_data['Mic'], Ps, 'k-', markerfacecolor='None')
     ax.set_xlabel('Mach Number, ${\mathbf{M_{ic}}}$',  family='sans-serif')
     ax.set_ylabel('Specific Excess Power, (ft/s)', family='sans-serif')
-    ax.plot(0.64, 83, 'ko', markerfacecolor='none')
-
-    # Add the SC data
-    if SC_data is not None:
-        ax.plot(SC_data['Mic'], SC_data['Ps'], 'kx', markerfacecolor='None', label='Sawtooth Climb')
-    
-    plt.show()
+    ax.set_ylim(30, 90)
 
     return fig, ax

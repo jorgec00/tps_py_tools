@@ -112,9 +112,9 @@ class LJ_hand_LASC_flight_data:
         time = hh * 3600 + mm * 60 + ss
         # Calculate time from start of maneuver 
         self.time = np.array(time - time[0]) # Time in seconds from start of maneuver
-        self.Vic = (data['Airspeed (KCAS)'].to_numpy(np.float64)) * 1.6878 # to fps (-4 is position corrected speed)
-        self.Hic = data['Altitude (ft)'].to_numpy(np.float64) # feet
-        self.Tic = data['Temperature (C)'].to_numpy(np.float64) + 273.15  # Celsius to Kelvin
+        self.Vic = ((data['Airspeed (KCAS)'].to_numpy(np.float64)) - 4) * 1.6878 # to fps (-4 is position corrected speed)
+        self.Hic = data['Altitude (ft)'].to_numpy(np.float64)# feet
+        self.Tic = data['Temperature (C)'].to_numpy(np.float64) + 273.15 - 10 # Celsius to Kelvin
 
     def process_level_accel(self):
         """Process the hand data to extract energy height and Mach number for level acceleration.
@@ -125,8 +125,8 @@ class LJ_hand_LASC_flight_data:
         Returns:
             - Class instance containing the following;
                 -- Time since beginning of maneuver
-                -- Calibrated Airspeed (kts)
-                -- Indicated Altitude (ft)
+                -- True Airspeed (kts)
+                -- Altitude (ft)
                 -- Energy height at each calibrated airspeed
                 -- Mach number at each calibrated airspeed
                 -- Specific excess power at each calibrated airspeed
@@ -143,14 +143,13 @@ class LJ_hand_LASC_flight_data:
         qcic = qcic_ps * ps
         Mic = calculate_mach(qcic, ps)
         Vt = calculate_true_airspeed(Mic, self.Tic/atm.constants.TEMP_SEA_LEVEL)
-
         # Calculate energy height over time
         energy_height = self.Hic + Vt**2 / (2 * atm.constants.GRAVITY_SEA_LEVEL)
         
-        # Append Mic and energy height to dataframe
+        # Append Mic, Vt, and energy height to dataframe
         self.Mic = Mic
         self.energy_height = energy_height
-        
+        self.Vt = Vt
 
         return self
 

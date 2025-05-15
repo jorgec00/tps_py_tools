@@ -1,0 +1,10 @@
+﻿Date,Altitude (ft),True Airspeed (ft/s),Ps (ft/s),Fuel (thousand lbs),Temperature (C),Notes
+5/2/25,20000,691,62,4.5,0,
+5/2/25,15000,632,70,2.5,-2,
+5/2/25,15000,630,76,,0,
+5/7/25,10000,574,76,,0,"Marginal Data 5 knot spread, 290 indicated"
+5/7/25,10000,510,85,,3,"Degraded data 14 knot spread, 262 indicated"
+5/7/25,10000,410,79,,3,210 indicated
+5/7/25,10000,573,75,,-2,"Marginal data, 6 knots spread, 295 indicated"
+5/7/25,10000,573,74,,3,"Marginal data, 7 knots spread, 295 indicated"
+5/7/25,10000,486,85,,4,"Degraded data, 9 knot spread, 245 indicated"
